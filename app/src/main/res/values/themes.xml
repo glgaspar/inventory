@@ -1,0 +1,8 @@
+<resources>
+    <!-- Base application theme. Material Components (not Material3): Material3 needs a newer library than API 17 allows. -->
+    <style name="Base.Theme.Inventory" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Customize your light theme here. -->
+    </style>
+
+    <style name="Theme.Inventory" parent="Base.Theme.Inventory" />
+</resources>

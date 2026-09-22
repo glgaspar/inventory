@@ -1,0 +1,5 @@
+<resources>
+    <style name="Base.Theme.Inventory" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Customize your dark theme here. -->
+    </style>
+</resources>
