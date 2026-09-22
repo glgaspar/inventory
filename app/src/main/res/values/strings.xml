@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Inventory</string>
+
+    <string name="category_kitchen">Kitchen</string>
+    <string name="category_cleaning">Cleaning</string>
+    <string name="category_bathroom">Bathroom</string>
+    <string name="category_other">Other</string>
 </resources>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Inventário</string>
+
+    <string name="category_kitchen">Cozinha</string>
+    <string name="category_cleaning">Limpeza</string>
+    <string name="category_bathroom">Banheiro</string>
+    <string name="category_other">Outros</string>
+</resources>
