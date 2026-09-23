@@ -10,6 +10,7 @@ android {
         targetSdk 37
         versionCode 1
         versionName "0.1"
+        multiDexEnabled true
     }
     buildTypes {
         release { optimization { enable false } }
@@ -30,5 +31,8 @@ dependencies {
     implementation libs.material
     implementation libs.gson
     implementation libs.glide
+    implementation libs.okhttp
+    implementation libs.multidex
     testImplementation libs.junit
+    testImplementation libs.mockwebserver
 }

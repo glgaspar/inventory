@@ -3,7 +3,9 @@
 The app talks to a CRUD API over Postgres that lives in a separate repository.
 Until it exists, the app uses `MockInventoryApi`, which implements this same contract in memory.
 
-- Base URL: configurable in the app (plain `http://` — Android 4.2 has TLS 1.2 disabled by default).
+- Base URL: set in the app, home screen → **Server** (e.g. `192.168.0.10:8080`; `http://` is added if missing, paths like
+  `http://host/api` work). Empty = the built-in demo data (`MockInventoryApi`). Use plain `http://`: Android 4.2 has
+  TLS 1.2 disabled by default. Client: `HttpInventoryApi` (OkHttp 3.12), tested against `MockWebServer`.
 - All bodies are JSON with `Content-Type: application/json`.
 - Timestamps are ISO-8601 strings in UTC, e.g. `2026-09-22T13:05:00Z`.
 - Categories: `kitchen`, `cleaning`, `bathroom`, `other`.
@@ -65,6 +67,7 @@ Until it exists, the app uses `MockInventoryApi`, which implements this same con
 
 ## Notes for the backend
 
+- Any non-2xx status is shown to the user as an error; a connection failure appears as status 0.
 - Endpoint 1 must return `404` (not an empty body) when the barcode is unknown; the app opens the
   "register product" dialog on 404.
 - Endpoint 3 is atomic: either every item is recorded or none. The app deletes its local session only

@@ -71,4 +71,10 @@
         <item quantity="one">Saída · %d pacote</item>
         <item quantity="other">Saída · %d pacotes</item>
     </plurals>
+    <string name="action_server">Servidor</string>
+    <string name="server_title">Endereço do servidor</string>
+    <string name="server_message">Deixe vazio para usar dados de demonstração.</string>
+    <string name="server_invalid">Endereço inválido</string>
+    <string name="server_status_demo">Dados de demonstração (sem servidor)</string>
+    <string name="server_status">Servidor: %1$s</string>
 </resources>

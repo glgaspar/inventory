@@ -75,4 +75,11 @@
         <item quantity="one">Usage · %d package</item>
         <item quantity="other">Usage · %d packages</item>
     </plurals>
+    <string name="action_server">Server</string>
+    <string name="server_title">Server address</string>
+    <string name="server_message">Leave empty to use demo data.</string>
+    <string name="server_hint" translatable="false">192.168.0.10:8080</string>
+    <string name="server_invalid">Invalid address</string>
+    <string name="server_status_demo">Demo data (no server)</string>
+    <string name="server_status">Server: %1$s</string>
 </resources>
