@@ -5,4 +5,11 @@
     </style>
 
     <style name="Theme.Inventory" parent="Base.Theme.Inventory" />
+    <style name="InventoryColumnHeader">
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">1</item>
+    </style>
 </resources>

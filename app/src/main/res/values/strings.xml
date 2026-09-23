@@ -5,4 +5,59 @@
     <string name="category_cleaning">Cleaning</string>
     <string name="category_bathroom">Bathroom</string>
     <string name="category_other">Other</string>
+
+    <string name="home_new_session">New session</string>
+    <string name="home_inventory">Inventory</string>
+    <plurals name="home_continue_session">
+        <item quantity="one">Continue session (%d item)</item>
+        <item quantity="other">Continue session (%d items)</item>
+    </plurals>
+
+    <string name="discard_session_title">Discard current session?</string>
+    <string name="discard_session_message">The items already scanned will be lost.</string>
+    <string name="discard">Discard</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="title_session">Scanning</string>
+    <string name="title_inventory">Inventory</string>
+    <string name="placeholder_coming_soon">Coming soon</string>
+
+    <string name="session_empty">Scan a product to add it</string>
+    <string name="session_row_amount">%1$d × %2$s = %3$s</string>
+    <string name="session_fewer">Fewer packages</string>
+    <string name="session_more">More packages</string>
+    <string name="session_remove">Remove</string>
+    <string name="scan_busy">Please wait, still working</string>
+    <string name="scan_failed">Lookup failed: %1$s</string>
+    <string name="sign_minus" translatable="false">−</string>
+    <string name="sign_plus" translatable="false">+</string>
+
+    <string name="new_product_title">New product</string>
+    <string name="new_product_barcode">Barcode: %1$s</string>
+    <string name="new_product_name">Name</string>
+    <string name="new_product_category">Category</string>
+    <string name="new_product_unit">Unit</string>
+    <string name="new_product_package_size">Amount per package</string>
+    <string name="save">Save</string>
+    <string name="error_name_required">Enter a name</string>
+    <string name="error_package_size">Enter a number greater than 0</string>
+    <string name="create_failed">Could not save the product: %1$s</string>
+
+    <string name="action_send">Send</string>
+    <string name="action_cancel_session">Cancel session</string>
+    <plurals name="sent_toast">
+        <item quantity="one">%d item sent</item>
+        <item quantity="other">%d items sent</item>
+    </plurals>
+    <string name="send_failed">Could not send: %1$s</string>
+    <string name="retry">Retry</string>
+
+    <string name="col_name">Name</string>
+    <string name="col_packages">Packages</string>
+    <string name="col_amount">Amount</string>
+    <string name="col_updated">Updated</string>
+    <string name="sort_ascending" translatable="false">%1$s ▲</string>
+    <string name="sort_descending" translatable="false">%1$s ▼</string>
+    <string name="inventory_empty">Nothing in stock yet</string>
+    <string name="inventory_failed">Could not load the inventory: %1$s</string>
 </resources>

@@ -62,7 +62,7 @@ appcompat = "1.6.1"          # 1.7.0+ needs 21
 recyclerview = "1.3.2"       # 1.4.0+ needs 21
 constraintlayout = "2.1.4"
 material = "1.9.0"           # if sync complains, drop to 1.6.1
-gson = "2.10.1"
+gson = "2.8.9"               # 2.10+ uses ReflectiveOperationException (API 19) -> VerifyError on 17
 glide = "4.16.0"             # image loading, minSdk 14
 okhttp = "3.12.13"           # last line supporting API < 21; only needed in Part 3
 

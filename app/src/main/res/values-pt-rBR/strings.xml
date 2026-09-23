@@ -5,4 +5,55 @@
     <string name="category_cleaning">Limpeza</string>
     <string name="category_bathroom">Banheiro</string>
     <string name="category_other">Outros</string>
+
+    <string name="home_new_session">Nova entrada</string>
+    <string name="home_inventory">Estoque</string>
+    <plurals name="home_continue_session">
+        <item quantity="one">Continuar entrada (%d item)</item>
+        <item quantity="other">Continuar entrada (%d itens)</item>
+    </plurals>
+
+    <string name="discard_session_title">Descartar a entrada atual?</string>
+    <string name="discard_session_message">Os itens já lidos serão perdidos.</string>
+    <string name="discard">Descartar</string>
+    <string name="cancel">Cancelar</string>
+
+    <string name="title_session">Leitura</string>
+    <string name="title_inventory">Estoque</string>
+    <string name="placeholder_coming_soon">Em breve</string>
+
+    <string name="session_empty">Leia um produto para adicioná-lo</string>
+    <string name="session_row_amount">%1$d × %2$s = %3$s</string>
+    <string name="session_fewer">Menos pacotes</string>
+    <string name="session_more">Mais pacotes</string>
+    <string name="session_remove">Remover</string>
+    <string name="scan_busy">Aguarde, ainda processando</string>
+    <string name="scan_failed">Falha na busca: %1$s</string>
+
+    <string name="new_product_title">Novo produto</string>
+    <string name="new_product_barcode">Código: %1$s</string>
+    <string name="new_product_name">Nome</string>
+    <string name="new_product_category">Categoria</string>
+    <string name="new_product_unit">Unidade</string>
+    <string name="new_product_package_size">Quantidade por pacote</string>
+    <string name="save">Salvar</string>
+    <string name="error_name_required">Informe o nome</string>
+    <string name="error_package_size">Informe um número maior que 0</string>
+    <string name="create_failed">Não foi possível salvar o produto: %1$s</string>
+
+    <string name="action_send">Enviar</string>
+    <string name="action_cancel_session">Cancelar entrada</string>
+    <plurals name="sent_toast">
+        <item quantity="one">%d item enviado</item>
+        <item quantity="other">%d itens enviados</item>
+    </plurals>
+    <string name="send_failed">Falha ao enviar: %1$s</string>
+    <string name="retry">Tentar de novo</string>
+
+    <string name="col_name">Nome</string>
+    <string name="col_packages">Pacotes</string>
+    <string name="col_amount">Total</string>
+    <string name="col_updated">Atualizado</string>
+    <string name="inventory_empty">Nada no estoque ainda</string>
+    <string name="inventory_failed">Não foi possível carregar o estoque: %1$s</string>
 </resources>
