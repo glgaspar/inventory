@@ -2,17 +2,15 @@ package com.pessimaideia.inventory.scanner;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
-/**
- * Keyboard-wedge scanner: the scanner types the barcode followed by Enter into whatever has
- * focus. We make that a 1x1 transparent EditText that keeps focus.
- */
 public class WedgeScannerInput implements ScannerInput {
 
     private static final String TAG = "Inventory";
@@ -32,6 +30,21 @@ public class WedgeScannerInput implements ScannerInput {
         field.setTextColor(Color.TRANSPARENT);
         field.setCursorVisible(false);
         field.setOnEditorActionListener((view, actionId, event) -> handleAction(actionId, event));
+        field.setOnKeyListener((view, keyCode, event) -> handleKey(keyCode, event));
+        field.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable text) {
+                handleText(text);
+            }
+        });
 
         ViewGroup root = activity.findViewById(android.R.id.content);
         root.addView(field, new ViewGroup.LayoutParams(1, 1));
@@ -45,29 +58,50 @@ public class WedgeScannerInput implements ScannerInput {
         }
     }
 
-    /** Returns true when we handled the key, so the EditText does not also act on it. */
     private boolean handleAction(int actionId, KeyEvent event) {
         if (event != null) {
-            // Hardware Enter (scanner or PC keyboard) arrives twice: DOWN, then UP.
-            if (!isEnter(event.getKeyCode())) return false;
-            if (event.getAction() == KeyEvent.ACTION_DOWN) emit();
+            if (event.getKeyCode() != KeyEvent.KEYCODE_ENTER) return false;
+            if (event.getAction() == KeyEvent.ACTION_DOWN) emitField();
             return true;
         }
-        // On-screen keyboard's "Done" key has no KeyEvent.
         if (actionId == EditorInfo.IME_ACTION_DONE) {
-            emit();
+            emitField();
             return true;
         }
         return false;
     }
 
-    private static boolean isEnter(int keyCode) {
-        return keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER;
+    private boolean handleKey(int keyCode, KeyEvent event) {
+        if (keyCode != KeyEvent.KEYCODE_TAB && keyCode != KeyEvent.KEYCODE_NUMPAD_ENTER) return false;
+        if (event.getAction() == KeyEvent.ACTION_DOWN) emitField();
+        return true;
     }
 
-    private void emit() {
-        String barcode = field.getText().toString().trim();
+    private void handleText(Editable text) {
+        int end = firstTerminator(text);
+        if (end < 0) return;
+        String barcode = text.subSequence(0, end).toString();
+        String rest = text.subSequence(end + 1, text.length()).toString();
+        deliver(barcode);
+        field.setText(rest);
+    }
+
+    static int firstTerminator(CharSequence text) {
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\n' || c == '\r' || c == '\t') return i;
+        }
+        return -1;
+    }
+
+    private void emitField() {
+        String text = field.getText().toString();
         field.setText("");
+        deliver(text);
+    }
+
+    private void deliver(String raw) {
+        String barcode = raw.trim();
         if (barcode.isEmpty()) return;
         Log.d(TAG, "Scanned: " + barcode);
         listener.onScan(barcode);

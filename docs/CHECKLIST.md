@@ -31,7 +31,7 @@ Companion to [PLAN.md](PLAN.md). Tick items as they are verified on disk / on th
 - [x] Step 8 Send / Cancel ([step-08-send-cancel.md](steps/step-08-send-cancel.md))
 - [x] Step 9 `InventoryActivity` ([step-09-inventory.md](steps/step-09-inventory.md))
 - [x] Step 10 `ProductDetailActivity` ([step-10-product-detail.md](steps/step-10-product-detail.md))
-- [ ] Step 11 CN51 polish
+- [x] Step 11 CN51 polish (emulator part: wedge accepts Enter / numpad Enter / Tab / newline, screen stays on while scanning, Up arrow) — device checks in [CN51.md](CN51.md)
 - [ ] Step 12 `HttpInventoryApi` (after backend exists)
 
 

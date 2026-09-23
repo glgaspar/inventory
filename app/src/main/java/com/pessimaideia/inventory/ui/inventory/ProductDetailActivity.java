@@ -55,6 +55,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
         Product product = item.product;
         setTitle(product.name);
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         showHeader(product);
 
@@ -67,6 +68,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         list.setAdapter(adapter);
 
         load();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     private void showHeader(Product product) {

@@ -40,6 +40,7 @@ public class InventoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inventory);
         setTitle(R.string.title_inventory);
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         column = readColumn();
@@ -58,6 +59,12 @@ public class InventoryActivity extends AppCompatActivity {
         updateHeaders();
 
         load();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     // ---- loading -------------------------------------------------------------------------
