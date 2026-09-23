@@ -2,4 +2,6 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="movement_in">#FF2E7D32</color>
+    <color name="movement_out">#FFC62828</color>
 </resources>

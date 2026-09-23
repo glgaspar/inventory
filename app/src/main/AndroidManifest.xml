@@ -29,6 +29,10 @@
             android:name=".ui.inventory.InventoryActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.inventory.ProductDetailActivity"
+            android:parentActivityName=".ui.inventory.InventoryActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

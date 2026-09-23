@@ -20,7 +20,6 @@
 
     <string name="title_session">Scanning</string>
     <string name="title_inventory">Inventory</string>
-    <string name="placeholder_coming_soon">Coming soon</string>
 
     <string name="session_empty">Scan a product to add it</string>
     <string name="session_row_amount">%1$d × %2$s = %3$s</string>
@@ -60,4 +59,20 @@
     <string name="sort_descending" translatable="false">%1$s ▼</string>
     <string name="inventory_empty">Nothing in stock yet</string>
     <string name="inventory_failed">Could not load the inventory: %1$s</string>
+    <string name="detail_image">Product photo</string>
+    <string name="detail_history">History</string>
+    <string name="detail_empty">No movements yet</string>
+    <string name="detail_failed">Could not load the history: %1$s</string>
+    <plurals name="detail_stock">
+        <item quantity="one">%1$s in stock · %2$d package</item>
+        <item quantity="other">%1$s in stock · %2$d packages</item>
+    </plurals>
+    <plurals name="movement_in">
+        <item quantity="one">Entry · %d package</item>
+        <item quantity="other">Entry · %d packages</item>
+    </plurals>
+    <plurals name="movement_out">
+        <item quantity="one">Usage · %d package</item>
+        <item quantity="other">Usage · %d packages</item>
+    </plurals>
 </resources>

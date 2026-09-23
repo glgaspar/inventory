@@ -1,5 +1,6 @@
 package com.pessimaideia.inventory.ui;
 
+import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.Unit;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -48,5 +49,14 @@ public final class Formats {
 
     public static String shortDate(Date date, Locale locale) {
         return DateFormat.getDateInstance(DateFormat.SHORT, locale).format(date);
+    }
+
+    public static String shortDateTime(Date date, Locale locale) {
+        return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale).format(date);
+    }
+
+    public static String signedAmount(double value, Movement.Type type, Unit unit, Locale locale) {
+        String sign = type == Movement.Type.IN ? "+" : "\u2212";
+        return sign + amount(value, unit, locale);
     }
 }

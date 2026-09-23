@@ -3,6 +3,7 @@ package com.pessimaideia.inventory.ui;
 
 import static org.junit.Assert.assertEquals;
 
+import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.Unit;
 
 import org.junit.Test;
@@ -63,5 +64,10 @@ public class FormatsTest {
     public void parseIsoRejectsOtherText() {
         assertNull(Formats.parseIso("yesterday"));
         assertNull(Formats.parseIso("2026-13-40T00:00:00Z"));
+    }
+    @Test
+    public void signedAmountShowsDirection() {
+        assertEquals("+5 kg", Formats.signedAmount(5, Movement.Type.IN, Unit.KG, Locale.US));
+        assertEquals("\u22121,5 L", Formats.signedAmount(1.5, Movement.Type.OUT, Unit.L, PT_BR));
     }
 }

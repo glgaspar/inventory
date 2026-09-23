@@ -30,12 +30,10 @@ Companion to [PLAN.md](PLAN.md). Tick items as they are verified on disk / on th
 - [x] Step 7 Register unknown product dialog ([step-07-new-product-dialog.md](steps/step-07-new-product-dialog.md))
 - [x] Step 8 Send / Cancel ([step-08-send-cancel.md](steps/step-08-send-cancel.md))
 - [x] Step 9 `InventoryActivity` ([step-09-inventory.md](steps/step-09-inventory.md))
-- [ ] Step 10 `ProductDetailActivity` ([step-10-product-detail.md](steps/step-10-product-detail.md))
+- [x] Step 10 `ProductDetailActivity` ([step-10-product-detail.md](steps/step-10-product-detail.md))
 - [ ] Step 11 CN51 polish
 - [ ] Step 12 `HttpInventoryApi` (after backend exists)
 
-Leftovers: unused `placeholder_coming_soon` string still in both `strings.xml` (Step 10 removes it).
-Nothing since commit `c637273` is committed yet (Steps 3–9).
 
 Until 1.7 is done, steps 1–3 are verifiable with `./gradlew test` on the desktop; steps 4+ can be
 smoke-tested in an emulator (`API 17` system image) or wait for the device.

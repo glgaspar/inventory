@@ -25,7 +25,7 @@ public class InventoryActivity extends AppCompatActivity {
     private static final String PREFS = "inventory";
     private static final String KEY_COLUMN = "sort_column";
     private static final String KEY_ASCENDING = "sort_ascending";
-    private final InventoryAdapter adapter = new InventoryAdapter();
+    private final InventoryAdapter adapter = new InventoryAdapter(this::openDetail);
     private final Map<SortColumn, TextView> headers = new EnumMap<>(SortColumn.class);
     private SharedPreferences prefs;
     private List<InventoryItem> items = new ArrayList<>();
@@ -88,6 +88,10 @@ public class InventoryActivity extends AppCompatActivity {
     private void showRows() {
         adapter.setRows(InventoryRows.build(items, column, ascending, Locale.getDefault()));
         empty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void openDetail(InventoryItem item) {
+        startActivity(ProductDetailActivity.intentFor(this, item));
     }
 
     // ---- sorting -------------------------------------------------------------------------

@@ -18,10 +18,19 @@ import java.util.Locale;
 
 public class InventoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    public interface Listener {
+        void onItemClick(InventoryItem item);
+    }
+
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
 
+    private final Listener listener;
     private List<Row> rows = new ArrayList<>();
+
+    public InventoryAdapter(Listener listener) {
+        this.listener = listener;
+    }
 
     public void setRows(List<Row> rows) {
         this.rows = rows;
@@ -45,7 +54,7 @@ public class InventoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (viewType == TYPE_HEADER) {
             return new HeaderHolder(inflater.inflate(R.layout.item_inventory_header, parent, false));
         }
-        return new ItemHolder(inflater.inflate(R.layout.item_inventory, parent, false));
+        return new ItemHolder(inflater.inflate(R.layout.item_inventory, parent, false), listener);
     }
 
     @Override
@@ -76,9 +85,11 @@ public class InventoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         private final TextView packages;
         private final TextView amount;
         private final TextView updated;
+        private InventoryItem item;
 
-        ItemHolder(View view) {
+        ItemHolder(View view, Listener listener) {
             super(view);
+            view.setOnClickListener(v -> listener.onItemClick(item));
             name = view.findViewById(R.id.name);
             packages = view.findViewById(R.id.packages);
             amount = view.findViewById(R.id.amount);
@@ -86,6 +97,7 @@ public class InventoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         void bind(InventoryItem item) {
+            this.item = item;
             Locale locale = Locale.getDefault();
             name.setText(item.product.name);
             packages.setText(String.valueOf(item.packages));

@@ -20,7 +20,6 @@
 
     <string name="title_session">Leitura</string>
     <string name="title_inventory">Estoque</string>
-    <string name="placeholder_coming_soon">Em breve</string>
 
     <string name="session_empty">Leia um produto para adicioná-lo</string>
     <string name="session_row_amount">%1$d × %2$s = %3$s</string>
@@ -56,4 +55,20 @@
     <string name="col_updated">Atualizado</string>
     <string name="inventory_empty">Nada no estoque ainda</string>
     <string name="inventory_failed">Não foi possível carregar o estoque: %1$s</string>
+    <string name="detail_image">Foto do produto</string>
+    <string name="detail_history">Histórico</string>
+    <string name="detail_empty">Nenhuma movimentação ainda</string>
+    <string name="detail_failed">Não foi possível carregar o histórico: %1$s</string>
+    <plurals name="detail_stock">
+        <item quantity="one">%1$s em estoque · %2$d pacote</item>
+        <item quantity="other">%1$s em estoque · %2$d pacotes</item>
+    </plurals>
+    <plurals name="movement_in">
+        <item quantity="one">Entrada · %d pacote</item>
+        <item quantity="other">Entrada · %d pacotes</item>
+    </plurals>
+    <plurals name="movement_out">
+        <item quantity="one">Saída · %d pacote</item>
+        <item quantity="other">Saída · %d pacotes</item>
+    </plurals>
 </resources>
