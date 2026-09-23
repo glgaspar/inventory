@@ -1,15 +1,139 @@
-<resources>
-    <!-- Base application theme. Material Components (not Material3): Material3 needs a newer library than API 17 allows. -->
-    <style name="Base.Theme.Inventory" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Customize your light theme here. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.Inventory" parent="Theme.MaterialComponents">
+        <item name="colorPrimary">@color/fd_accent_fill</item>
+        <item name="colorPrimaryVariant">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/fd_accent</item>
+        <item name="colorSecondaryVariant">@color/fd_accent_pressed</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSurface">@color/fd_panel</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="android:colorBackground">@color/fd_background</item>
+        <item name="android:windowBackground">@color/fd_background</item>
+        <item name="android:statusBarColor" tools:targetApi="21">@color/black</item>
+        <item name="android:textColorPrimary">@color/fd_text</item>
+        <item name="android:textColorSecondary">@color/fd_text_muted</item>
+        <item name="android:textColorHint">@color/fd_text_faint</item>
+        <item name="colorControlNormal">@color/fd_text_faint</item>
+        <item name="colorControlActivated">@color/fd_accent</item>
+        <item name="colorControlHighlight">#33B3078B</item>
+        <item name="android:listDivider">@drawable/divider</item>
+        <item name="actionBarStyle">@style/Widget.Inventory.ActionBar</item>
+        <item name="actionMenuTextColor">@color/white</item>
+        <item name="actionMenuTextAppearance">@style/TextAppearance.Inventory.ActionMenu</item>
+        <item name="actionButtonStyle">@style/Widget.Inventory.ActionButton</item>
+        <item name="actionBarItemBackground">?attr/selectableItemBackground</item>
+        <item name="materialButtonStyle">@style/Widget.Inventory.Button</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Inventory.Dialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Inventory.Dialog</item>
+        <item name="snackbarStyle">@style/Widget.Inventory.Snackbar</item>
+        <item name="snackbarTextViewStyle">@style/Widget.Inventory.SnackbarText</item>
+        <item name="snackbarButtonStyle">@style/Widget.Inventory.SnackbarButton</item>
     </style>
 
     <style name="Theme.Inventory" parent="Base.Theme.Inventory" />
-    <style name="InventoryColumnHeader">
+
+    <style name="Widget.Inventory.ActionBar" parent="Widget.AppCompat.ActionBar.Solid">
+        <item name="background">@drawable/bg_action_bar</item>
+        <item name="elevation">0dp</item>
+        <item name="titleTextStyle">@style/TextAppearance.Inventory.ActionBarTitle</item>
+    </style>
+
+    <style name="TextAppearance.Inventory.ActionBarTitle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Inventory.ActionMenu" parent="TextAppearance.AppCompat.Widget.ActionBar.Menu">
+        <item name="android:textColor">@color/white</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.Inventory.ActionButton" parent="Widget.AppCompat.ActionButton">
+        <item name="textAllCaps">false</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="background">?attr/selectableItemBackground</item>
+    </style>
+
+    <style name="Widget.Inventory.Button" parent="Widget.MaterialComponents.Button">
+        <item name="cornerRadius">0dp</item>
+        <item name="strokeColor">@color/fd_accent</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.Inventory.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="cornerRadius">0dp</item>
+        <item name="strokeColor">@color/fd_accent</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="rippleColor">#66B3078B</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="Widget.Inventory.Button.Stepper" parent="Widget.Inventory.Button.Outlined">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="Widget.Inventory.Snackbar" parent="Widget.MaterialComponents.Snackbar">
+        <item name="backgroundTint">@color/fd_form</item>
+        <item name="actionTextColorAlpha">1</item>
+    </style>
+
+    <style name="Widget.Inventory.SnackbarText" parent="Widget.MaterialComponents.Snackbar.TextView">
+        <item name="android:textColor">@color/fd_text_body</item>
+    </style>
+
+    <style name="Widget.Inventory.SnackbarButton" parent="Widget.MaterialComponents.Button.TextButton.Snackbar">
+        <item name="android:textColor">@color/fd_link</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="ThemeOverlay.Inventory.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">@color/fd_link</item>
+        <item name="colorSecondary">@color/fd_accent</item>
+        <item name="colorSurface">@color/black</item>
+        <item name="colorControlActivated">@color/fd_accent</item>
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:windowMinWidthMajor">80%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Inventory.DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Inventory.DialogButton</item>
+    </style>
+
+    <style name="Widget.Inventory.DialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/fd_link</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.Inventory.Progress" parent="Widget.MaterialComponents.LinearProgressIndicator">
+        <item name="android:indeterminate">true</item>
+        <item name="indicatorColor">@color/fd_accent</item>
+        <item name="trackColor">@color/fd_panel_header</item>
+        <item name="trackThickness">3dp</item>
+    </style>
+
+    <style name="InventoryTableHeader">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/fd_text_muted</item>
+    </style>
+
+    <style name="InventoryColumnHeader" parent="InventoryTableHeader">
         <item name="android:layout_height">match_parent</item>
         <item name="android:background">?attr/selectableItemBackground</item>
-        <item name="android:textSize">14sp</item>
-        <item name="android:textStyle">bold</item>
         <item name="android:maxLines">1</item>
     </style>
 </resources>

@@ -4,18 +4,20 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <ProgressBar
+    <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progress"
-        style="?android:attr/progressBarStyleHorizontal"
+        style="@style/Widget.Inventory.Progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:indeterminate="true"
         android:visibility="invisible" />
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_margin="8dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_table"
+        android:padding="1dp">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/list"
@@ -30,7 +32,8 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:padding="24dp"
-            android:textSize="18sp"
-            android:text="@string/session_empty" />
+            android:text="@string/session_empty"
+            android:textColor="@color/fd_text_muted"
+            android:textSize="18sp" />
     </FrameLayout>
 </LinearLayout>

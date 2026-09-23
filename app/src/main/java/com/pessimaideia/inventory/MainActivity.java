@@ -6,11 +6,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatEditText;
 
 import com.pessimaideia.inventory.api.HttpInventoryApi;
 import com.pessimaideia.inventory.data.SessionStore;
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void editServer() {
         App app = App.from(this);
-        EditText input = new EditText(this);
+        AppCompatEditText input = new AppCompatEditText(this);
         input.setSingleLine(true);
         input.setHint(R.string.server_hint);
         HttpUrl current = app.serverUrl();
@@ -91,13 +92,13 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.server_title)
                 .setMessage(R.string.server_message)
-                .setView(input)
+                .setView(padded(input))
                 .setPositiveButton(R.string.save, null)
                 .setNegativeButton(R.string.cancel, null)
                 .create();
         dialog.setOnShowListener(shown -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setOnClickListener(v -> {
-                    String text = input.getText().toString().trim();
+                    String text = String.valueOf(input.getText()).trim();
                     HttpUrl url = HttpInventoryApi.parseBaseUrl(text);
                     if (!text.isEmpty() && url == null) {
                         input.setError(getString(R.string.server_invalid));
@@ -128,5 +129,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void openSession() {
         startActivity(new Intent(this, SessionActivity.class));
+    }
+
+    private FrameLayout padded(View view) {
+        int side = Math.round(20 * getResources().getDisplayMetrics().density);
+        FrameLayout frame = new FrameLayout(this);
+        frame.setPadding(side, 0, side, 0);
+        frame.addView(view);
+        return frame;
     }
 }

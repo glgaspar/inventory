@@ -72,8 +72,11 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.ViewHo
                     entry ? R.plurals.movement_in : R.plurals.movement_out,
                     movement.packages, movement.packages));
             amount.setText(Formats.signedAmount(movement.amount, movement.type, unit, locale));
-            amount.setTextColor(ContextCompat.getColor(itemView.getContext(),
-                    entry ? R.color.movement_in : R.color.movement_out));
+            int color = ContextCompat.getColor(itemView.getContext(),
+                    entry ? R.color.movement_in : R.color.movement_out);
+            amount.setTextColor(color);
+            type.setTextColor(color);
+            type.setBackgroundResource(entry ? R.drawable.bg_pill_in : R.drawable.bg_pill_out);
         }
     }
 }

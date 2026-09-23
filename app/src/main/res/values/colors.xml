@@ -2,6 +2,27 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="movement_in">#FF2E7D32</color>
-    <color name="movement_out">#FFC62828</color>
+
+    <color name="fd_background">#FF0A0A0A</color>
+    <color name="fd_panel">#FF0D0D0D</color>
+    <color name="fd_panel_header">#FF141414</color>
+    <color name="fd_form">#FF1C1C1C</color>
+    <color name="fd_accent">#FFB3078B</color>
+    <color name="fd_accent_fill">#FFA71986</color>
+    <color name="fd_accent_pressed">#FF920671</color>
+    <color name="fd_accent_soft">#4DB3078B</color>
+    <color name="fd_link">#FFEC4899</color>
+    <color name="fd_text">#FFFFFFFF</color>
+    <color name="fd_text_body">#FFD4D4D8</color>
+    <color name="fd_text_muted">#FF9CA3AF</color>
+    <color name="fd_text_faint">#FF71717A</color>
+    <color name="fd_border">#FF27272A</color>
+    <color name="fd_divider">#6627272A</color>
+
+    <color name="movement_in">#FF34D399</color>
+    <color name="movement_out">#FFF87171</color>
+    <color name="pill_in_fill">#1A10B981</color>
+    <color name="pill_in_stroke">#3310B981</color>
+    <color name="pill_out_fill">#1AEF4444</color>
+    <color name="pill_out_stroke">#33EF4444</color>
 </resources>
