@@ -13,7 +13,7 @@ Server setting uses `MockInventoryApi`, which implements this same contract in m
 
 ## Auth
 
-Every endpoint except `GET /` and `POST /login` needs `Authorization: Bearer <token>`. A missing, unknown or
+The web UI is served at `GET /web/` (static, no login needed to load it). Every other endpoint except `GET /` and `POST /login` needs `Authorization: Bearer <token>`. A missing, unknown or
 expired token gets `401`; the app should then show its login screen. Tokens expire after 30 days without use, on
 logout, when the password changes (other tokens of that user) and when an admin disables the user or resets
 their password. Login is rate-limited per IP (`429`).

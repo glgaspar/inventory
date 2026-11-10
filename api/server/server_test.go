@@ -269,3 +269,17 @@ func jsonNumber(n int64) string {
 	b, _ := json.Marshal(n)
 	return string(b)
 }
+
+func TestFrontend(t *testing.T) {
+	e := New(nil)
+	for path, want := range map[string]int{"/web": 301, "/web/": 200, "/web/app.js": 200, "/web/style.css": 200, "/web/nope.js": 404} {
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
+		if rec.Code != want {
+			t.Fatalf("GET %s: %d, want %d", path, rec.Code, want)
+		}
+		if !strings.Contains(rec.Header().Get("Content-Security-Policy"), "default-src 'self'") {
+			t.Fatalf("GET %s: no CSP", path)
+		}
+	}
+}

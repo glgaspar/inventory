@@ -8,6 +8,7 @@ import (
 
 	"github.com/glgaspar/inventory/api/activity"
 	"github.com/glgaspar/inventory/api/auth"
+	"github.com/glgaspar/inventory/api/frontend"
 	"github.com/glgaspar/inventory/api/movements"
 	"github.com/glgaspar/inventory/api/products"
 	"github.com/glgaspar/inventory/api/users"
@@ -20,7 +21,11 @@ func New(db *sql.DB) *echo.Echo {
 	e.HideBanner = true
 	e.HidePort = true
 	e.IPExtractor = echo.ExtractIPDirect()
-	e.Use(requestLog(), middleware.Recover(), middleware.RequestID(), middleware.Secure(), middleware.BodyLimit("1M"))
+	secure := middleware.DefaultSecureConfig
+	secure.XFrameOptions = "DENY"
+	secure.ReferrerPolicy = "same-origin"
+	secure.ContentSecurityPolicy = "default-src 'self'; img-src 'self' http: https: data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+	e.Use(requestLog(), middleware.Recover(), middleware.RequestID(), middleware.SecureWithConfig(secure), middleware.BodyLimit("1M"))
 
 	user := auth.Require(db)
 	admin := []echo.MiddlewareFunc{user, auth.AdminOnly}
@@ -34,6 +39,7 @@ func New(db *sql.DB) *echo.Echo {
 	log := activity.Handler{DB: db}
 
 	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusOK) })
+	frontend.Register(e)
 
 	e.POST("/login", a.Login, loginLimit)
 	e.POST("/logout", a.Logout, user)
