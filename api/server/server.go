@@ -1,0 +1,82 @@
+package server
+
+import (
+	"database/sql"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"github.com/glgaspar/inventory/api/activity"
+	"github.com/glgaspar/inventory/api/auth"
+	"github.com/glgaspar/inventory/api/movements"
+	"github.com/glgaspar/inventory/api/products"
+	"github.com/glgaspar/inventory/api/users"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+func New(db *sql.DB) *echo.Echo {
+	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
+	e.IPExtractor = echo.ExtractIPDirect()
+	e.Use(requestLog(), middleware.Recover(), middleware.RequestID(), middleware.Secure(), middleware.BodyLimit("1M"))
+
+	user := auth.Require(db)
+	admin := []echo.MiddlewareFunc{user, auth.AdminOnly}
+	loginLimit := middleware.RateLimiter(middleware.NewRateLimiterMemoryStoreWithConfig(
+		middleware.RateLimiterMemoryStoreConfig{Rate: 0.1, Burst: 10, ExpiresIn: 10 * time.Minute}))
+
+	a := auth.Handler{DB: db}
+	p := products.Handler{DB: db}
+	m := movements.Handler{DB: db}
+	u := users.Handler{DB: db}
+	log := activity.Handler{DB: db}
+
+	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusOK) })
+
+	e.POST("/login", a.Login, loginLimit)
+	e.POST("/logout", a.Logout, user)
+	e.GET("/me", a.Me, user)
+	e.PUT("/me/password", a.ChangePassword, user)
+
+	e.GET("/products/by-barcode/:barcode", p.ByBarcode, user)
+	e.POST("/products", p.Create, user)
+	e.GET("/products/:id", p.Get, user)
+	e.GET("/products/:id/movements", m.ByProduct, user)
+	e.POST("/movements", m.Create, user)
+	e.GET("/inventory", m.Inventory, user)
+
+	e.GET("/users", u.List, admin...)
+	e.POST("/users", u.Create, admin...)
+	e.PATCH("/users/:id", u.Update, admin...)
+	e.GET("/activity", log.List, admin...)
+
+	return e
+}
+
+func requestLog() echo.MiddlewareFunc {
+	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogMethod:    true,
+		LogURI:       true,
+		LogStatus:    true,
+		LogLatency:   true,
+		LogRemoteIP:  true,
+		LogRequestID: true,
+		LogError:     true,
+		HandleError:  true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			attrs := []any{"method", v.Method, "uri", v.URI, "status", v.Status, "latency", v.Latency.String(),
+				"ip", v.RemoteIP, "requestId", v.RequestID}
+			if u := auth.Current(c); u.ID != 0 {
+				attrs = append(attrs, "user", u.Username)
+			}
+			if v.Status >= 500 && v.Error != nil {
+				slog.Error("request", append(attrs, "err", v.Error.Error())...)
+			} else {
+				slog.Info("request", attrs...)
+			}
+			return nil
+		},
+	})
+}

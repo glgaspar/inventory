@@ -11,7 +11,31 @@ Server setting uses `MockInventoryApi`, which implements this same contract in m
 - Categories: `kitchen`, `cleaning`, `bathroom`, `other`.
 - Units: `un`, `kg`, `g`, `L`, `mL`. `packageSize` is how much of the unit one scanned package holds.
 
+## Auth
+
+Every endpoint except `GET /` and `POST /login` needs `Authorization: Bearer <token>`. A missing, unknown or
+expired token gets `401`; the app should then show its login screen. Tokens expire after 30 days without use, on
+logout, when the password changes (other tokens of that user) and when an admin disables the user or resets
+their password. Login is rate-limited per IP (`429`).
+
+| Method & path | Who | Request body | Response |
+|---|---|---|---|
+| `POST /login` | anyone | `{ "username", "password" }` | `200 { "token", "user": User }` / `401` |
+| `POST /logout` | user | — | `204` |
+| `GET /me` | user | — | `200 User` |
+| `PUT /me/password` | user | `{ "current", "new" }` | `204` / `403` wrong current |
+| `GET /users` | admin | — | `200 [User + "active", "createdAt"]` |
+| `POST /users` | admin | `{ "username", "password", "admin" }` | `201` |
+| `PATCH /users/{id}` | admin | any of `{ "admin", "active", "password" }` | `200` |
+| `GET /activity?limit=100&before={id}` | admin | — | `200 [ActivityEntry]` newest first |
+
+`User` is `{ "id", "username", "admin" }`. Usernames are lowercased, `a-z 0-9 . _ -`, up to 50 chars.
+Passwords are 8 to 72 characters. A non-admin calling an admin endpoint gets `403`. An admin can't remove their
+own admin flag or disable themselves.
+
 ## Endpoints
+
+All of these need a logged-in user (any role).
 
 | # | Method & path | Used by | Request body | Response |
 |---|---|---|---|---|
@@ -51,10 +75,12 @@ Server setting uses `MockInventoryApi`, which implements this same contract in m
   "type": "in",          // "in" = entry, "out" = usage
   "amount": 5,
   "packages": 1,
-  "at": "2026-09-22T13:05:00Z"
+  "at": "2026-09-22T13:05:00Z",
+  "userId": 3,           // who sent the batch this movement came from
+  "username": "maria"
 }
 
-// MovementBatch  (what the app POSTs when a scanning session is sent)
+// MovementBatch  (what the app POSTs when a scanning session is sent; the user comes from the token)
 {
   "type": "in",
   "at": "2026-09-22T13:05:00Z",
@@ -62,6 +88,18 @@ Server setting uses `MockInventoryApi`, which implements this same contract in m
     { "productId": 12, "packages": 2, "amount": 10 },
     { "productId": 7,  "packages": 1, "amount": 1 }
   ]
+}
+
+// ActivityEntry  (audit log)
+{
+  "id": 88,
+  "userId": 3,           // null for a failed login with an unknown username
+  "username": "maria",
+  "action": "movements.create",   // login, login.failed, logout, password.change, user.create,
+                                  // user.update, product.create, movements.create
+  "details": { "batchId": 42, "type": "in", "items": 2 },
+  "ip": "192.168.0.23",
+  "at": "2026-09-22T13:05:00Z"
 }
 ```
 

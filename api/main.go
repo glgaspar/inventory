@@ -1,42 +1,49 @@
 package main
 
 import (
-	"database/sql"
-	_ "embed"
-	"fmt"
-	"log"
+	"log/slog"
+	"net/http"
 	"os"
+	"time"
 
+	"github.com/glgaspar/inventory/api/auth"
+	"github.com/glgaspar/inventory/api/db"
+	"github.com/glgaspar/inventory/api/server"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
-//go:embed db.sql
-var schema string
-
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	godotenv.Load()
 
-	db, err := openDb()
+	conn, err := db.Open()
 	if err != nil {
-		log.Fatal(err)
+		fail(err)
 	}
-	if _, err := db.Exec(schema); err != nil {
-		log.Fatal(err)
+	if err := db.Migrate(conn); err != nil {
+		fail(err)
+	}
+	if err := auth.Bootstrap(conn); err != nil {
+		fail(err)
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	log.Fatal(newServer(db).Start(":" + port))
+	s := &http.Server{
+		Addr:              ":" + port,
+		Handler:           server.New(conn),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+	}
+	slog.Info("listening", "port", port)
+	fail(s.ListenAndServe())
 }
 
-func openDb() (*sql.DB, error) {
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_USER"), os.Getenv("PG_PASSWORD"), os.Getenv("PG_DBNAME")))
-	if err != nil {
-		return nil, err
-	}
-	return db, db.Ping()
+func fail(err error) {
+	slog.Error("fatal", "err", err)
+	os.Exit(1)
 }

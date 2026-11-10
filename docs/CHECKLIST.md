@@ -42,5 +42,7 @@ smoke-tested in an emulator (`API 17` system image) or wait for the device.
 
 - [x] Go + echo + Postgres, all 6 endpoints of [API.md](API.md), batch insert is atomic; integration tests against a real Postgres
 - [x] `docker compose up` (api + postgres) builds and answers
+- [x] Users, bearer-token login, admin/user roles, audit log (`/activity`), user on every batch, JSON request logs, login rate limit, security headers, body limit, server timeouts
+- [ ] App: login screen + `Authorization` header + 401 → back to login (needs the Android SDK reinstalled)
 - [ ] Point the app (Server setting) at the real API from the emulator / CN51
 - [ ] Deploy on the home server
