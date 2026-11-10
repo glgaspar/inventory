@@ -32,12 +32,12 @@ public class MovementBatch {
         this.items = items;
     }
 
-    public static MovementBatch entryFrom(List<SessionItem> session, Date now) {
+    public static MovementBatch from(Movement.Type type, List<SessionItem> session, Date now) {
         List<Item> items = new ArrayList<>();
         for (SessionItem sessionItem : session) {
             items.add(new Item(sessionItem.product.id, sessionItem.packages, sessionItem.amount()));
         }
-        return new MovementBatch(Movement.Type.IN, isoUtc(now), items);
+        return new MovementBatch(type, isoUtc(now), items);
     }
 
     static String isoUtc(Date date) {

@@ -5,6 +5,8 @@ import com.pessimaideia.inventory.model.InventoryItem;
 import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.MovementBatch;
 import com.pessimaideia.inventory.model.Product;
+import com.pessimaideia.inventory.model.RecipeResult;
+import com.pessimaideia.inventory.model.Suggestion;
 import com.pessimaideia.inventory.model.Unit;
 
 import java.text.SimpleDateFormat;
@@ -87,7 +89,7 @@ public class MockInventoryApi implements InventoryApi {
                                               int packages, String at) {
         Product p = findProductById(productId);
         Movement m = new Movement(nextMovementId++, productId, type,
-                packages * p.packageSize, packages, at);
+                packages * p.packageSize, packages, at, null);
         movements.add(m);
         return m;
     }
@@ -189,6 +191,20 @@ public class MockInventoryApi implements InventoryApi {
             // newest first: ISO-8601 strings sort correctly as plain text
             Collections.sort(result, (a, b) -> b.at.compareTo(a.at));
             return result;
+        });
+    }
+
+    @Override
+    public void lookup(final String barcode, ApiCallback<Suggestion> callback) {
+        run(callback, () -> {
+            throw new ApiException(404, "Lookup needs a server");
+        });
+    }
+
+    @Override
+    public void suggestRecipes(String hint, String lang, boolean refresh, ApiCallback<RecipeResult> callback) {
+        run(callback, () -> {
+            throw new ApiException(503, "Recipes need a server");
         });
     }
 

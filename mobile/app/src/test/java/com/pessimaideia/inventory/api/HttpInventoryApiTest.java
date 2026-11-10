@@ -58,6 +58,63 @@ public class HttpInventoryApiTest {
     }
 
     @Test
+    public void lookup() throws Exception {
+        server.enqueue(new MockResponse().setBody("{\"barcode\":\"789\",\"name\":\"Lava louças Ypê\",\"brand\":\"Ypê\","
+                + "\"category\":\"cleaning\",\"unit\":\"mL\",\"packageSize\":500,\"imageUrl\":\"http://h/images/x\","
+                + "\"source\":\"openproductsfacts\"}"));
+        RecordingCallback<com.pessimaideia.inventory.model.Suggestion> cb = new RecordingCallback<>();
+
+        api.lookup("789", cb);
+
+        assertNull(cb.error);
+        assertEquals("Lava louças Ypê", cb.result.name);
+        assertEquals(Category.CLEANING, cb.result.category);
+        assertEquals(Unit.ML, cb.result.unit);
+        assertEquals(500.0, cb.result.packageSize, 0.0);
+        assertEquals("http://h/images/x", cb.result.imageUrl);
+        assertEquals("/api/lookup/789", server.takeRequest().getPath());
+    }
+
+    @Test
+    public void lookupNotFound() {
+        server.enqueue(new MockResponse().setResponseCode(404));
+        RecordingCallback<com.pessimaideia.inventory.model.Suggestion> cb = new RecordingCallback<>();
+        api.lookup("000", cb);
+        assertTrue(cb.error.isNotFound());
+    }
+
+    @Test
+    public void recipes() throws Exception {
+        server.enqueue(new MockResponse().setBody("{\"recipes\":[{\"title\":\"Arroz\",\"summary\":\"\",\"minutes\":30,"
+                + "\"servings\":4,\"ingredients\":[{\"name\":\"arroz\",\"amount\":\"1 xícara\",\"fromStock\":true}],"
+                + "\"missing\":[\"alho\"],\"steps\":[\"Cozinhe\"]}],\"model\":\"m\",\"generatedAt\":\"x\",\"cached\":false}"));
+        RecordingCallback<com.pessimaideia.inventory.model.RecipeResult> cb = new RecordingCallback<>();
+
+        api.suggestRecipes("jantar", "pt", true, cb);
+
+        assertNull(cb.error);
+        assertEquals("Arroz", cb.result.recipes.get(0).title);
+        assertTrue(cb.result.recipes.get(0).ingredients.get(0).fromStock);
+        assertEquals("alho", cb.result.recipes.get(0).missing.get(0));
+        RecordedRequest request = server.takeRequest();
+        assertEquals("/api/recipes/suggest", request.getPath());
+        JsonObject body = new JsonParser().parse(request.getBody().readUtf8()).getAsJsonObject();
+        assertEquals("jantar", body.get("hint").getAsString());
+        assertEquals("pt", body.get("lang").getAsString());
+        assertTrue(body.get("refresh").getAsBoolean());
+    }
+
+    @Test
+    public void movementHasWhoSentIt() {
+        server.enqueue(new MockResponse().setBody("[{\"id\":1,\"batchId\":4,\"productId\":1,\"type\":\"out\","
+                + "\"amount\":2,\"packages\":0,\"at\":\"2026-09-22T13:05:00Z\",\"userId\":3,\"username\":\"maria\"}]"));
+        RecordingCallback<List<Movement>> cb = new RecordingCallback<>();
+        api.getMovements(1, cb);
+        assertEquals("maria", cb.result.get(0).username);
+        assertEquals(Movement.Type.OUT, cb.result.get(0).type);
+    }
+
+    @Test
     public void sendsTokenOnEveryRequest() throws Exception {
         server.enqueue(new MockResponse().setBody("[]"));
         server.enqueue(new MockResponse().setResponseCode(201).setBody("{\"id\":7}"));

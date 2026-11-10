@@ -3,6 +3,8 @@ import com.pessimaideia.inventory.model.InventoryItem;
 import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.MovementBatch;
 import com.pessimaideia.inventory.model.Product;
+import com.pessimaideia.inventory.model.RecipeResult;
+import com.pessimaideia.inventory.model.Suggestion;
 import java.util.List;
 
 public interface InventoryApi {
@@ -24,4 +26,8 @@ public interface InventoryApi {
 
     /** GET /products/{id}/movements — newest first. */
     void getMovements(long productId, ApiCallback<List<Movement>> callback);
+
+    void lookup(String barcode, ApiCallback<Suggestion> callback);
+
+    void suggestRecipes(String hint, String lang, boolean refresh, ApiCallback<RecipeResult> callback);
 }

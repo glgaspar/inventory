@@ -39,6 +39,16 @@
             android:minHeight="56dp"
             android:text="@string/home_inventory"
             android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_recipes"
+            style="@style/Widget.Inventory.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="56dp"
+            android:text="@string/home_recipes"
+            android:textSize="18sp" />
     </LinearLayout>
 
     <TextView

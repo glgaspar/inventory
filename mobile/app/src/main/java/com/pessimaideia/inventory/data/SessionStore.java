@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.SessionItem;
 
 import java.io.File;
@@ -21,13 +22,16 @@ public class SessionStore {
 
     private static final String TAG = "Inventory";
     private static final String FILE_NAME = "session.json";
+    private static final String TYPE_FILE_NAME = "session_type";
     private static final Type LIST_TYPE = new TypeToken<List<SessionItem>>() {}.getType();
 
     private final File file;
+    private final File typeFile;
     private final Gson gson = new Gson();
 
     public SessionStore(File directory) {
         this.file = new File(directory, FILE_NAME);
+        this.typeFile = new File(directory, TYPE_FILE_NAME);
     }
 
     public synchronized boolean hasSession() {
@@ -62,6 +66,27 @@ public class SessionStore {
     public synchronized void clear() {
         if (file.exists() && !file.delete()) {
             Log.w(TAG, "Could not delete session file");
+        }
+        if (typeFile.exists() && !typeFile.delete()) {
+            Log.w(TAG, "Could not delete session type file");
+        }
+    }
+
+    public synchronized Movement.Type loadType() {
+        if (!typeFile.exists()) return Movement.Type.IN;
+        try (Reader reader = new FileReader(typeFile)) {
+            Movement.Type type = gson.fromJson(reader, Movement.Type.class);
+            return type != null ? type : Movement.Type.IN;
+        } catch (IOException | JsonParseException e) {
+            return Movement.Type.IN;
+        }
+    }
+
+    public synchronized void saveType(Movement.Type type) {
+        try (Writer writer = new FileWriter(typeFile)) {
+            gson.toJson(type, Movement.Type.class, writer);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not save session type", e);
         }
     }
 }

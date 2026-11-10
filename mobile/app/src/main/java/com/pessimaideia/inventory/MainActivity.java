@@ -15,6 +15,7 @@ import com.pessimaideia.inventory.data.SessionStore;
 import com.pessimaideia.inventory.ui.ServerDialog;
 import com.pessimaideia.inventory.ui.inventory.InventoryActivity;
 import com.pessimaideia.inventory.ui.login.LoginActivity;
+import com.pessimaideia.inventory.ui.recipes.RecipesActivity;
 import com.pessimaideia.inventory.ui.session.SessionActivity;
 
 import okhttp3.HttpUrl;
@@ -42,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_new_session).setOnClickListener(v -> startNewSession());
         findViewById(R.id.btn_inventory).setOnClickListener(v ->
                 startActivity(new Intent(this, InventoryActivity.class)));
+        findViewById(R.id.btn_recipes).setOnClickListener(v ->
+                startActivity(new Intent(this, RecipesActivity.class)));
     }
 
     /** Called every time this screen comes to the front, so the button reflects the file on disk. */

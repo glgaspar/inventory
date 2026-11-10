@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.pessimaideia.inventory.model.Category;
+import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.Product;
 import com.pessimaideia.inventory.model.SessionItem;
 import com.pessimaideia.inventory.model.Unit;
@@ -38,6 +39,15 @@ public class SessionStoreTest {
         Product rice = new Product(1, "7896004000015", "Arroz 5kg",
                 Category.KITCHEN, Unit.KG, 5, null);
         return new SessionItem(rice, packages);
+    }
+
+    @Test
+    public void typeDefaultsToEntryAndIsClearedWithTheSession() {
+        assertEquals(Movement.Type.IN, store.loadType());
+        store.saveType(Movement.Type.OUT);
+        assertEquals(Movement.Type.OUT, new SessionStore(temp.getRoot()).loadType());
+        store.clear();
+        assertEquals(Movement.Type.IN, store.loadType());
     }
 
     @Test

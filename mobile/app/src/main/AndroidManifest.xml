@@ -35,6 +35,11 @@
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".ui.recipes.RecipesActivity"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
             android:name=".ui.inventory.ProductDetailActivity"
             android:parentActivityName=".ui.inventory.InventoryActivity"
             android:screenOrientation="portrait" />

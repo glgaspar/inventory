@@ -6,7 +6,7 @@
     <string name="category_bathroom">Bathroom</string>
     <string name="category_other">Other</string>
 
-    <string name="home_new_session">New session</string>
+    <string name="home_new_session">New movement</string>
     <string name="home_inventory">Inventory</string>
     <plurals name="home_continue_session">
         <item quantity="one">Continue session (%d item)</item>
@@ -94,4 +94,24 @@
     <string name="login_failed">Could not log in: %1$s</string>
     <string name="login_expired">Your session expired, log in again</string>
     <string name="login_change_server">Change server</string>
+    <string name="lookup_searching">Searching product databases…</string>
+    <string name="lookup_found">Found in %1$s, check before saving</string>
+    <string name="lookup_not_found">Not found online, fill it in</string>
+    <string name="lookup_failed">Product databases unavailable, fill it in</string>
+    <string name="type_in">Entry</string>
+    <string name="type_out">Usage</string>
+    <string name="home_recipes">Recipes</string>
+    <string name="title_recipes">Recipes</string>
+    <string name="recipes_hint">Anything in mind? e.g. quick lunch</string>
+    <string name="recipes_suggest">Suggest</string>
+    <string name="recipes_again">Others</string>
+    <string name="recipes_thinking">Thinking… this can take up to a minute</string>
+    <string name="recipes_minutes">%1$d min</string>
+    <string name="recipes_servings">%1$d servings</string>
+    <string name="recipes_ingredients">Ingredients (✓ in stock)</string>
+    <string name="recipes_steps">Steps</string>
+    <string name="recipes_missing">To buy: %1$s</string>
+    <string name="recipes_off">Recipe suggestions need a server with them turned on.</string>
+    <string name="recipes_no_stock">There is nothing from the kitchen in stock to cook with.</string>
+    <string name="recipes_failed">Could not get suggestions: %1$s</string>
 </resources>

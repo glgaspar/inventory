@@ -19,7 +19,7 @@ public class MovementBatchTest {
     public void entryHasOneItemPerSessionRow() {
         List<SessionItem> session = Arrays.asList(new SessionItem(RICE, 2), new SessionItem(SOAP, 3));
 
-        MovementBatch batch = MovementBatch.entryFrom(session, new Date(0));
+        MovementBatch batch = MovementBatch.from(Movement.Type.IN, session, new Date(0));
 
         assertEquals(Movement.Type.IN, batch.type);
         assertEquals(2, batch.items.size());
@@ -28,6 +28,16 @@ public class MovementBatchTest {
         assertEquals(10.0, batch.items.get(0).amount, 0.0);
         assertEquals(8, batch.items.get(1).productId);
         assertEquals(3.0, batch.items.get(1).amount, 0.0);
+    }
+
+    @Test
+    public void usageKeepsItsType() {
+        List<SessionItem> session = Arrays.asList(new SessionItem(RICE, 1));
+
+        MovementBatch batch = MovementBatch.from(Movement.Type.OUT, session, new Date(0));
+
+        assertEquals(Movement.Type.OUT, batch.type);
+        assertEquals(5.0, batch.items.get(0).amount, 0.0);
     }
 
     @Test

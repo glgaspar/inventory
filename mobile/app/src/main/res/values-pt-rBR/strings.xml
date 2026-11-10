@@ -6,7 +6,7 @@
     <string name="category_bathroom">Banheiro</string>
     <string name="category_other">Outros</string>
 
-    <string name="home_new_session">Nova entrada</string>
+    <string name="home_new_session">Nova movimentação</string>
     <string name="home_inventory">Estoque</string>
     <plurals name="home_continue_session">
         <item quantity="one">Continuar entrada (%d item)</item>
@@ -68,8 +68,8 @@
         <item quantity="other">Entrada · %d pacotes</item>
     </plurals>
     <plurals name="movement_out">
-        <item quantity="one">Saída · %d pacote</item>
-        <item quantity="other">Saída · %d pacotes</item>
+        <item quantity="one">Consumo · %d pacote</item>
+        <item quantity="other">Consumo · %d pacotes</item>
     </plurals>
     <string name="action_server">Servidor</string>
     <string name="server_title">Endereço do servidor</string>
@@ -89,4 +89,24 @@
     <string name="login_failed">Não foi possível entrar: %1$s</string>
     <string name="login_expired">Sua sessão expirou, entre novamente</string>
     <string name="login_change_server">Trocar servidor</string>
+    <string name="lookup_searching">Buscando nas bases de produtos…</string>
+    <string name="lookup_found">Encontrado em %1$s, confira antes de salvar</string>
+    <string name="lookup_not_found">Não encontrado na internet, preencha os dados</string>
+    <string name="lookup_failed">Bases de produtos indisponíveis, preencha os dados</string>
+    <string name="type_in">Entrada</string>
+    <string name="type_out">Consumo</string>
+    <string name="home_recipes">Receitas</string>
+    <string name="title_recipes">Receitas</string>
+    <string name="recipes_hint">Alguma ideia? ex.: almoço rápido</string>
+    <string name="recipes_suggest">Sugerir</string>
+    <string name="recipes_again">Outras</string>
+    <string name="recipes_thinking">Pensando… pode levar até um minuto</string>
+    <string name="recipes_minutes">%1$d min</string>
+    <string name="recipes_servings">%1$d porções</string>
+    <string name="recipes_ingredients">Ingredientes (✓ no estoque)</string>
+    <string name="recipes_steps">Modo de preparo</string>
+    <string name="recipes_missing">Falta comprar: %1$s</string>
+    <string name="recipes_off">As sugestões de receitas precisam de um servidor com elas ativadas.</string>
+    <string name="recipes_no_stock">Não há nada da cozinha no estoque para cozinhar.</string>
+    <string name="recipes_failed">Não foi possível sugerir: %1$s</string>
 </resources>

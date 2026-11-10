@@ -65,7 +65,8 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.ViewHo
         void bind(Movement movement, Unit unit) {
             Locale locale = Locale.getDefault();
             Date date = Formats.parseIso(movement.at);
-            when.setText(date != null ? Formats.shortDateTime(date, locale) : movement.at);
+            String time = date != null ? Formats.shortDateTime(date, locale) : movement.at;
+            when.setText(movement.username != null ? time + " · " + movement.username : time);
 
             boolean entry = movement.type == Movement.Type.IN;
             type.setText(itemView.getResources().getQuantityString(

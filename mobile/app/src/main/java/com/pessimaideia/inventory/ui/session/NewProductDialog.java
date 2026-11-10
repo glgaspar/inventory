@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -14,14 +15,21 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+import com.bumptech.glide.Glide;
+import com.pessimaideia.inventory.App;
 import com.pessimaideia.inventory.R;
+import com.pessimaideia.inventory.api.ApiCallback;
+import com.pessimaideia.inventory.api.ApiException;
 import com.pessimaideia.inventory.model.Category;
 import com.pessimaideia.inventory.model.Product;
+import com.pessimaideia.inventory.model.Suggestion;
 import com.pessimaideia.inventory.model.Unit;
 import com.pessimaideia.inventory.ui.Formats;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /** Form for a barcode the backend does not know. Hands the filled-in Product to the Activity. */
 public class NewProductDialog extends DialogFragment {
@@ -35,6 +43,10 @@ public class NewProductDialog extends DialogFragment {
     private Spinner category;
     private Spinner unit;
     private EditText packageSize;
+    private TextView status;
+    private ImageView preview;
+    @Nullable
+    private String imageUrl;
 
     public static NewProductDialog newInstance(String barcode) {
         Bundle args = new Bundle();
@@ -56,9 +68,12 @@ public class NewProductDialog extends DialogFragment {
         category = form.findViewById(R.id.category);
         unit = form.findViewById(R.id.unit);
         packageSize = form.findViewById(R.id.package_size);
+        status = form.findViewById(R.id.lookup_status);
+        preview = form.findViewById(R.id.preview);
 
         category.setAdapter(spinnerAdapter(categoryLabels()));
         unit.setAdapter(spinnerAdapter(unitLabels()));
+        lookup(barcode);
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.new_product_title)
@@ -89,9 +104,48 @@ public class NewProductDialog extends DialogFragment {
         Product draft = new Product(0, barcode, productName,
                 Category.values()[category.getSelectedItemPosition()],
                 Unit.values()[unit.getSelectedItemPosition()],
-                size, null);
+                size, imageUrl);
         ((Listener) requireActivity()).onNewProduct(draft);
         dismiss();
+    }
+
+    private void lookup(String barcode) {
+        status.setText(R.string.lookup_searching);
+        App.from(requireContext()).api().lookup(barcode, new ApiCallback<Suggestion>() {
+            @Override
+            public void onSuccess(Suggestion s) {
+                if (!isAdded()) return;
+                if (name.getText().length() == 0 && s.name != null) name.setText(s.name);
+                if (s.category != null) category.setSelection(s.category.ordinal());
+                if (s.unit != null) unit.setSelection(s.unit.ordinal());
+                if (s.packageSize > 0 && packageSize.getText().length() == 0) {
+                    NumberFormat number = NumberFormat.getNumberInstance(Locale.getDefault());
+                    number.setGroupingUsed(false);
+                    number.setMaximumFractionDigits(3);
+                    packageSize.setText(number.format(s.packageSize));
+                }
+                imageUrl = s.imageUrl;
+                if (imageUrl != null) {
+                    preview.setVisibility(View.VISIBLE);
+                    Glide.with(NewProductDialog.this).load(imageUrl).into(preview);
+                }
+                status.setText(getString(R.string.lookup_found, sourceName(s.source)));
+            }
+
+            @Override
+            public void onError(ApiException error) {
+                if (!isAdded()) return;
+                status.setText(error.isNotFound() ? getString(R.string.lookup_not_found)
+                        : getString(R.string.lookup_failed));
+            }
+        });
+    }
+
+    private static String sourceName(String source) {
+        if ("openfoodfacts".equals(source)) return "Open Food Facts";
+        if ("openproductsfacts".equals(source)) return "Open Products Facts";
+        if ("openbeautyfacts".equals(source)) return "Open Beauty Facts";
+        return source;
     }
 
     private ArrayAdapter<String> spinnerAdapter(List<String> labels) {

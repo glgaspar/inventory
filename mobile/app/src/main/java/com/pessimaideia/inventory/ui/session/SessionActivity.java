@@ -1,15 +1,19 @@
 package com.pessimaideia.inventory.ui.session;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,6 +24,7 @@ import com.pessimaideia.inventory.api.ApiCallback;
 import com.pessimaideia.inventory.api.ApiException;
 import com.pessimaideia.inventory.api.InventoryApi;
 import com.pessimaideia.inventory.data.SessionStore;
+import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.MovementBatch;
 import com.pessimaideia.inventory.model.Product;
 import com.pessimaideia.inventory.model.SessionItem;
@@ -39,6 +44,9 @@ public class SessionActivity extends AppCompatActivity
     private ProgressBar progress;
     private TextView empty;
     private boolean busy;
+    private Movement.Type type;
+    private Button typeIn;
+    private Button typeOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,10 +60,16 @@ public class SessionActivity extends AppCompatActivity
         api = app.api();
         store = app.sessionStore();
         items = store.load();
+        type = store.hasSession() ? store.loadType() : Movement.Type.IN;
 
         list = findViewById(R.id.list);
         progress = findViewById(R.id.progress);
         empty = findViewById(R.id.empty);
+        typeIn = findViewById(R.id.btn_type_in);
+        typeOut = findViewById(R.id.btn_type_out);
+        typeIn.setOnClickListener(v -> setType(Movement.Type.IN));
+        typeOut.setOnClickListener(v -> setType(Movement.Type.OUT));
+        showType();
 
         adapter = new SessionAdapter(items, this);
         list.setLayoutManager(new LinearLayoutManager(this));
@@ -109,7 +123,7 @@ public class SessionActivity extends AppCompatActivity
 
     private void send() {
         final int count = items.size();
-        MovementBatch batch = MovementBatch.entryFrom(items, new Date());
+        MovementBatch batch = MovementBatch.from(type, items, new Date());
         setBusy(true);
         api.sendMovements(batch, new ApiCallback<Long>() {
             @Override
@@ -215,6 +229,19 @@ public class SessionActivity extends AppCompatActivity
             if (items.get(i).product.barcode.equals(barcode)) return i;
         }
         return -1;
+    }
+
+    private void setType(Movement.Type value) {
+        type = value;
+        store.saveType(value);
+        showType();
+    }
+
+    private void showType() {
+        int fill = ContextCompat.getColor(this, R.color.fd_accent_fill);
+        int none = ContextCompat.getColor(this, android.R.color.transparent);
+        ViewCompat.setBackgroundTintList(typeIn, ColorStateList.valueOf(type == Movement.Type.IN ? fill : none));
+        ViewCompat.setBackgroundTintList(typeOut, ColorStateList.valueOf(type == Movement.Type.OUT ? fill : none));
     }
 
     private void setBusy(boolean value) {

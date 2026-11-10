@@ -11,6 +11,8 @@ import com.pessimaideia.inventory.model.LoginResult;
 import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.MovementBatch;
 import com.pessimaideia.inventory.model.Product;
+import com.pessimaideia.inventory.model.RecipeResult;
+import com.pessimaideia.inventory.model.Suggestion;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -136,6 +138,23 @@ public class HttpInventoryApi implements InventoryApi {
         run(callback, () -> gson.<List<Movement>>fromJson(call(get(url)), MOVEMENT_LIST));
     }
 
+    @Override
+    public void lookup(String barcode, ApiCallback<Suggestion> callback) {
+        HttpUrl url = url("lookup").addPathSegment(barcode).build();
+        run(callback, () -> gson.fromJson(call(get(url)), Suggestion.class));
+    }
+
+    @Override
+    public void suggestRecipes(String hint, String lang, boolean refresh, ApiCallback<RecipeResult> callback) {
+        JsonObject body = new JsonObject();
+        body.addProperty("hint", hint);
+        body.addProperty("lang", lang);
+        body.addProperty("refresh", refresh);
+        HttpUrl url = url("recipes/suggest").build();
+        OkHttpClient slow = client.newBuilder().readTimeout(110, TimeUnit.SECONDS).build();
+        run(callback, () -> gson.fromJson(call(slow, post(url, body.toString())), RecipeResult.class));
+    }
+
     private HttpUrl.Builder url(String path) {
         return baseUrl.newBuilder().addPathSegments(path);
     }
@@ -155,6 +174,10 @@ public class HttpInventoryApi implements InventoryApi {
     }
 
     private String call(Request request) throws ApiException {
+        return call(client, request);
+    }
+
+    private static String call(OkHttpClient client, Request request) throws ApiException {
         try (Response response = client.newCall(request).execute()) {
             ResponseBody body = response.body();
             String text = body != null ? body.string() : "";
