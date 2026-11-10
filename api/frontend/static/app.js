@@ -2,7 +2,7 @@
 
 const strings = {
   en: {
-    app: 'Inventory', inventory: 'Inventory', movement: 'New session', users: 'Users', activity: 'Activity',
+    app: 'Inventory', inventory: 'Inventory', movement: 'Stock movement', users: 'Users', activity: 'Activity',
     password: 'Password', logout: 'Log out', login: 'Log in', username: 'Username', save: 'Save', cancel: 'Cancel',
     wrongLogin: 'Wrong username or password', sessionExpired: 'Your session expired, log in again',
     kitchen: 'Kitchen', cleaning: 'Cleaning', bathroom: 'Bathroom', other: 'Other', allCategories: 'All categories',
@@ -12,7 +12,7 @@ const strings = {
     historyEmpty: 'No movements yet', when: 'When', type: 'Type', user: 'User', in: 'Entry', out: 'Usage',
     scanHint: 'Scan or type a barcode and press Enter', sessionEmpty: 'Scan a product to add it',
     newProduct: 'New product', unknownBarcode: 'Barcode %1 is not registered yet', send: 'Send',
-    discard: 'Discard', discardConfirm: 'Discard the items in this session?', sent: 'Session sent',
+    discard: 'Discard', discardConfirm: 'Discard the items in this movement?', sent: 'Movement sent',
     remove: 'Remove', fewer: 'Fewer packages', more: 'More packages',
     newUser: 'New user', admin: 'Admin', active: 'Active', created: 'Created', resetPassword: 'Reset password',
     newPasswordFor: 'New password for %1 (8 to 72 characters)', userCreated: 'User %1 created', saved: 'Saved',
@@ -22,7 +22,7 @@ const strings = {
     loadFailed: 'Could not load: %1',
   },
   pt: {
-    app: 'Inventário', inventory: 'Estoque', movement: 'Nova entrada', users: 'Usuários', activity: 'Atividade',
+    app: 'Inventário', inventory: 'Estoque', movement: 'Movimentação', users: 'Usuários', activity: 'Atividade',
     password: 'Senha', logout: 'Sair', login: 'Entrar', username: 'Usuário', save: 'Salvar', cancel: 'Cancelar',
     wrongLogin: 'Usuário ou senha incorretos', sessionExpired: 'Sua sessão expirou, entre novamente',
     kitchen: 'Cozinha', cleaning: 'Limpeza', bathroom: 'Banheiro', other: 'Outros', allCategories: 'Todas as categorias',
@@ -32,7 +32,7 @@ const strings = {
     historyEmpty: 'Nenhuma movimentação ainda', when: 'Quando', type: 'Tipo', user: 'Usuário', in: 'Entrada', out: 'Consumo',
     scanHint: 'Leia ou digite um código e aperte Enter', sessionEmpty: 'Leia um produto para adicioná-lo',
     newProduct: 'Novo produto', unknownBarcode: 'O código %1 ainda não está cadastrado', send: 'Enviar',
-    discard: 'Descartar', discardConfirm: 'Descartar os itens desta entrada?', sent: 'Entrada enviada',
+    discard: 'Descartar', discardConfirm: 'Descartar os itens desta movimentação?', sent: 'Movimentação enviada',
     remove: 'Remover', fewer: 'Menos pacotes', more: 'Mais pacotes',
     newUser: 'Novo usuário', admin: 'Admin', active: 'Ativo', created: 'Criado', resetPassword: 'Redefinir senha',
     newPasswordFor: 'Nova senha para %1 (8 a 72 caracteres)', userCreated: 'Usuário %1 criado', saved: 'Salvo',
