@@ -6,4 +6,9 @@
         android:id="@+id/action_server"
         android:title="@string/action_server"
         app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/action_logout"
+        android:title="@string/action_logout"
+        app:showAsAction="never" />
 </menu>

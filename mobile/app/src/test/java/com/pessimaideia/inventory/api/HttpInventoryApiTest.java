@@ -49,7 +49,103 @@ public class HttpInventoryApiTest {
 
     private static HttpInventoryApi apiFor(String baseUrl) {
         return new HttpInventoryApi(HttpInventoryApi.parseBaseUrl(baseUrl), new OkHttpClient(),
-                Runnable::run, MainThreadPoster.DIRECT);
+                Runnable::run, MainThreadPoster.DIRECT, null, null);
+    }
+
+    private HttpInventoryApi withToken(String token, Runnable onUnauthorized) {
+        return new HttpInventoryApi(HttpInventoryApi.parseBaseUrl(server.url("/api/").toString()),
+                new OkHttpClient(), Runnable::run, MainThreadPoster.DIRECT, token, onUnauthorized);
+    }
+
+    @Test
+    public void sendsTokenOnEveryRequest() throws Exception {
+        server.enqueue(new MockResponse().setBody("[]"));
+        server.enqueue(new MockResponse().setResponseCode(201).setBody("{\"id\":7}"));
+        HttpInventoryApi authed = withToken("abc123", null);
+
+        authed.getInventory(new RecordingCallback<>());
+        authed.sendMovements(new MovementBatch(Movement.Type.IN, "2026-09-22T13:05:00Z",
+                Collections.<MovementBatch.Item>emptyList()), new RecordingCallback<>());
+
+        assertEquals("Bearer abc123", server.takeRequest().getHeader("Authorization"));
+        assertEquals("Bearer abc123", server.takeRequest().getHeader("Authorization"));
+    }
+
+    @Test
+    public void noTokenNoHeader() throws Exception {
+        server.enqueue(new MockResponse().setBody("[]"));
+        api.getInventory(new RecordingCallback<>());
+        assertNull(server.takeRequest().getHeader("Authorization"));
+    }
+
+    @Test
+    public void unauthorizedCallsBack() {
+        server.enqueue(new MockResponse().setResponseCode(401).setBody("{\"message\":\"login required\"}"));
+        int[] calls = {0};
+        RecordingCallback<List<InventoryItem>> cb = new RecordingCallback<>();
+
+        withToken("expired", () -> calls[0]++).getInventory(cb);
+
+        assertEquals(1, calls[0]);
+        assertNotNull(cb.error);
+        assertEquals(401, cb.error.statusCode);
+    }
+
+    @Test
+    public void otherErrorsDoNotLogOut() {
+        server.enqueue(new MockResponse().setResponseCode(404));
+        server.enqueue(new MockResponse().setResponseCode(403));
+        int[] calls = {0};
+        HttpInventoryApi authed = withToken("t", () -> calls[0]++);
+
+        authed.getProduct(9, new RecordingCallback<>());
+        authed.getInventory(new RecordingCallback<>());
+
+        assertEquals(0, calls[0]);
+    }
+
+    @Test
+    public void login() throws Exception {
+        server.enqueue(new MockResponse().setBody(
+                "{\"token\":\"tok\",\"user\":{\"id\":3,\"username\":\"maria\",\"admin\":false}}"));
+        RecordingCallback<com.pessimaideia.inventory.model.LoginResult> cb = new RecordingCallback<>();
+
+        api.login("maria", "secret pass", cb);
+
+        assertNull(cb.error);
+        assertEquals("tok", cb.result.token);
+        assertEquals("maria", cb.result.user.username);
+        assertFalse(cb.result.user.admin);
+        RecordedRequest request = server.takeRequest();
+        assertEquals("POST", request.getMethod());
+        assertEquals("/api/login", request.getPath());
+        JsonObject body = new JsonParser().parse(request.getBody().readUtf8()).getAsJsonObject();
+        assertEquals("maria", body.get("username").getAsString());
+        assertEquals("secret pass", body.get("password").getAsString());
+    }
+
+    @Test
+    public void wrongPasswordIs401WithoutLogoutCallback() {
+        server.enqueue(new MockResponse().setResponseCode(401));
+        RecordingCallback<com.pessimaideia.inventory.model.LoginResult> cb = new RecordingCallback<>();
+
+        api.login("maria", "wrong", cb);
+
+        assertEquals(401, cb.error.statusCode);
+    }
+
+    @Test
+    public void logout() throws Exception {
+        server.enqueue(new MockResponse().setResponseCode(204));
+        RecordingCallback<Boolean> cb = new RecordingCallback<>();
+
+        withToken("tok", null).logout(cb);
+
+        assertNull(cb.error);
+        assertTrue(cb.result);
+        RecordedRequest request = server.takeRequest();
+        assertEquals("/api/logout", request.getPath());
+        assertEquals("Bearer tok", request.getHeader("Authorization"));
     }
 
     @Test

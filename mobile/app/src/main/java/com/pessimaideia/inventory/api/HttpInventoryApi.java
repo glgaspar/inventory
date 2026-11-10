@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.pessimaideia.inventory.model.InventoryItem;
+import com.pessimaideia.inventory.model.LoginResult;
 import com.pessimaideia.inventory.model.Movement;
 import com.pessimaideia.inventory.model.MovementBatch;
 import com.pessimaideia.inventory.model.Product;
@@ -42,22 +43,30 @@ public class HttpInventoryApi implements InventoryApi {
     private final Executor background;
     private final MainThreadPoster mainThread;
     private final Gson gson = new Gson();
+    @Nullable
+    private final String token;
+    @Nullable
+    private final Runnable onUnauthorized;
 
     public HttpInventoryApi(HttpUrl baseUrl, OkHttpClient client, Executor background,
-                            MainThreadPoster mainThread) {
+                            MainThreadPoster mainThread, @Nullable String token,
+                            @Nullable Runnable onUnauthorized) {
         this.baseUrl = baseUrl;
         this.client = client;
         this.background = background;
         this.mainThread = mainThread;
+        this.token = token;
+        this.onUnauthorized = onUnauthorized;
     }
 
-    public static HttpInventoryApi forAndroid(HttpUrl baseUrl) {
+    public static HttpInventoryApi forAndroid(HttpUrl baseUrl, @Nullable String token,
+                                              @Nullable Runnable onUnauthorized) {
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(15, TimeUnit.SECONDS)
                 .build();
         return new HttpInventoryApi(baseUrl, client, Executors.newSingleThreadExecutor(),
-                new AndroidMainThreadPoster());
+                new AndroidMainThreadPoster(), token, onUnauthorized);
     }
 
     @Nullable
@@ -70,6 +79,22 @@ public class HttpInventoryApi implements InventoryApi {
         }
         if (!trimmed.endsWith("/")) trimmed = trimmed + "/";
         return HttpUrl.parse(trimmed);
+    }
+
+    public void login(String username, String password, ApiCallback<LoginResult> callback) {
+        JsonObject body = new JsonObject();
+        body.addProperty("username", username);
+        body.addProperty("password", password);
+        HttpUrl url = url("login").build();
+        run(callback, () -> gson.fromJson(call(post(url, body.toString())), LoginResult.class));
+    }
+
+    public void logout(ApiCallback<Boolean> callback) {
+        HttpUrl url = url("logout").build();
+        run(callback, () -> {
+            call(post(url, ""));
+            return Boolean.TRUE;
+        });
     }
 
     @Override
@@ -115,12 +140,18 @@ public class HttpInventoryApi implements InventoryApi {
         return baseUrl.newBuilder().addPathSegments(path);
     }
 
-    private static Request get(HttpUrl url) {
-        return new Request.Builder().url(url).get().build();
+    private Request get(HttpUrl url) {
+        return request(url).get().build();
     }
 
-    private static Request post(HttpUrl url, String json) {
-        return new Request.Builder().url(url).post(RequestBody.create(JSON, json)).build();
+    private Request post(HttpUrl url, String json) {
+        return request(url).post(RequestBody.create(JSON, json)).build();
+    }
+
+    private Request.Builder request(HttpUrl url) {
+        Request.Builder builder = new Request.Builder().url(url);
+        if (token != null) builder.header("Authorization", "Bearer " + token);
+        return builder;
     }
 
     private String call(Request request) throws ApiException {
@@ -143,6 +174,9 @@ public class HttpInventoryApi implements InventoryApi {
                 if (result == null) throw new ApiException(0, "Empty response");
                 mainThread.post(() -> callback.onSuccess(result));
             } catch (ApiException e) {
+                if (e.statusCode == 401 && token != null && onUnauthorized != null) {
+                    mainThread.post(onUnauthorized);
+                }
                 mainThread.post(() -> callback.onError(e));
             } catch (JsonParseException e) {
                 mainThread.post(() -> callback.onError(new ApiException(0, "Invalid response")));

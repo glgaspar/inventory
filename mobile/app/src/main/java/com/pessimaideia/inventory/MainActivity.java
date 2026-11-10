@@ -6,16 +6,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatEditText;
 
-import com.pessimaideia.inventory.api.HttpInventoryApi;
 import com.pessimaideia.inventory.data.SessionStore;
+import com.pessimaideia.inventory.ui.ServerDialog;
 import com.pessimaideia.inventory.ui.inventory.InventoryActivity;
+import com.pessimaideia.inventory.ui.login.LoginActivity;
 import com.pessimaideia.inventory.ui.session.SessionActivity;
 
 import okhttp3.HttpUrl;
@@ -29,6 +28,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (App.from(this).needsLogin()) {
+            openLogin();
+            return;
+        }
         setContentView(R.layout.activity_main);
 
         sessionStore = App.from(this).sessionStore();
@@ -45,6 +48,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        refresh();
+    }
+
+    private void refresh() {
+        if (App.from(this).needsLogin()) {
+            openLogin();
+            return;
+        }
         int count = sessionStore.load().size();
         if (count > 0) {
             continueButton.setText(getResources()
@@ -63,53 +74,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_logout).setVisible(App.from(this).username() != null);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_server) {
-            editServer();
+            ServerDialog.show(this, this::refresh);
+            return true;
+        }
+        if (item.getItemId() == R.id.action_logout) {
+            App.from(this).signOut();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void updateServerStatus() {
-        HttpUrl url = App.from(this).serverUrl();
-        serverStatus.setText(url != null
-                ? getString(R.string.server_status, url.toString())
-                : getString(R.string.server_status_demo));
-    }
-
-    private void editServer() {
         App app = App.from(this);
-        AppCompatEditText input = new AppCompatEditText(this);
-        input.setSingleLine(true);
-        input.setHint(R.string.server_hint);
-        HttpUrl current = app.serverUrl();
-        if (current != null) {
-            input.setText(current.toString());
-            input.setSelection(input.length());
+        HttpUrl url = app.serverUrl();
+        if (url == null) {
+            serverStatus.setText(R.string.server_status_demo);
+        } else if (app.username() != null) {
+            serverStatus.setText(getString(R.string.server_status_user, url.toString(), app.username()));
+        } else {
+            serverStatus.setText(getString(R.string.server_status, url.toString()));
         }
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.server_title)
-                .setMessage(R.string.server_message)
-                .setView(padded(input))
-                .setPositiveButton(R.string.save, null)
-                .setNegativeButton(R.string.cancel, null)
-                .create();
-        dialog.setOnShowListener(shown -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                .setOnClickListener(v -> {
-                    String text = String.valueOf(input.getText()).trim();
-                    HttpUrl url = HttpInventoryApi.parseBaseUrl(text);
-                    if (!text.isEmpty() && url == null) {
-                        input.setError(getString(R.string.server_invalid));
-                        return;
-                    }
-                    app.setServerUrl(url);
-                    updateServerStatus();
-                    dialog.dismiss();
-                }));
-        dialog.show();
+        supportInvalidateOptionsMenu();
     }
+
 
     private void startNewSession() {
         if (!sessionStore.hasSession()) {
@@ -131,11 +126,8 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, SessionActivity.class));
     }
 
-    private FrameLayout padded(View view) {
-        int side = Math.round(20 * getResources().getDisplayMetrics().density);
-        FrameLayout frame = new FrameLayout(this);
-        frame.setPadding(side, 0, side, 0);
-        frame.addView(view);
-        return frame;
+    private void openLogin() {
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
     }
 }

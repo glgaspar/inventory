@@ -47,6 +47,7 @@ smoke-tested in an emulator (`API 17` system image) or wait for the device.
 - [x] Unknown barcodes: `/lookup` (Open Food/Products/Beauty Facts), cached, photos re-served over HTTP; web form prefills
 - [x] Recipe suggestions (`/recipes/suggest`, web tab Receitas) via an OpenAI-compatible API; checked with a fake model
 - [ ] Point `RECIPES_*` at Open WebUI (API key + model) and try real suggestions
-- [ ] App: login screen + use `/lookup` in the register dialog + `Authorization` header + 401 → back to login (needs the Android SDK reinstalled)
+- [x] App: login screen + `Authorization` header + 401 → back to login; logout in the menu; checked on the `cn51-api17` emulator against a local API
+- [ ] App: use `/lookup` in the register dialog
 - [ ] Point the app (Server setting) at the real API from the emulator / CN51
 - [ ] Deploy on the home server

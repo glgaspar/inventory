@@ -82,4 +82,16 @@
     <string name="server_invalid">Invalid address</string>
     <string name="server_status_demo">Demo data (no server)</string>
     <string name="server_status">Server: %1$s</string>
+    <string name="server_status_user">Server: %1$s · %2$s</string>
+    <string name="action_logout">Log out</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_button">Log in</string>
+    <string name="login_busy">Logging in…</string>
+    <string name="login_missing">Enter your username and password</string>
+    <string name="login_wrong">Wrong username or password</string>
+    <string name="login_rate_limited">Too many attempts, wait a moment and try again</string>
+    <string name="login_failed">Could not log in: %1$s</string>
+    <string name="login_expired">Your session expired, log in again</string>
+    <string name="login_change_server">Change server</string>
 </resources>

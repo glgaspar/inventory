@@ -77,4 +77,16 @@
     <string name="server_invalid">Endereço inválido</string>
     <string name="server_status_demo">Dados de demonstração (sem servidor)</string>
     <string name="server_status">Servidor: %1$s</string>
+    <string name="server_status_user">Servidor: %1$s · %2$s</string>
+    <string name="action_logout">Sair</string>
+    <string name="login_username">Usuário</string>
+    <string name="login_password">Senha</string>
+    <string name="login_button">Entrar</string>
+    <string name="login_busy">Entrando…</string>
+    <string name="login_missing">Informe usuário e senha</string>
+    <string name="login_wrong">Usuário ou senha incorretos</string>
+    <string name="login_rate_limited">Muitas tentativas, aguarde um pouco e tente de novo</string>
+    <string name="login_failed">Não foi possível entrar: %1$s</string>
+    <string name="login_expired">Sua sessão expirou, entre novamente</string>
+    <string name="login_change_server">Trocar servidor</string>
 </resources>
