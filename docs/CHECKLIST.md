@@ -1,6 +1,6 @@
 # Progress checklist
 
-Companion to [PLAN.md](PLAN.md). Tick items as they are verified on disk / on the device.
+Companion to [PLAN.md](PLAN.md). Tick items as they are verified on disk / on the device. The Android project now lives in `mobile/`, so gradle commands run from there.
 
 ## Part 1 — Project & environment
 
