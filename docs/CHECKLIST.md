@@ -37,3 +37,10 @@ Companion to [PLAN.md](PLAN.md). Tick items as they are verified on disk / on th
 
 Until 1.7 is done, steps 1–3 are verifiable with `./gradlew test` on the desktop; steps 4+ can be
 smoke-tested in an emulator (`API 17` system image) or wait for the device.
+
+## Part 5 — API (`api/`)
+
+- [x] Go + echo + Postgres, all 6 endpoints of [API.md](API.md), batch insert is atomic; integration tests against a real Postgres
+- [x] `docker compose up` (api + postgres) builds and answers
+- [ ] Point the app (Server setting) at the real API from the emulator / CN51
+- [ ] Deploy on the home server

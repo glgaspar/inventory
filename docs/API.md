@@ -1,7 +1,7 @@
 # Inventario backend API (as consumed by the Android app)
 
-The app talks to a CRUD API over Postgres that lives in a separate repository.
-Until it exists, the app uses `MockInventoryApi`, which implements this same contract in memory.
+The app talks to a CRUD API over Postgres in `api/` (Go + echo). The app can still run without it: an empty
+Server setting uses `MockInventoryApi`, which implements this same contract in memory.
 
 - Base URL: set in the app, home screen → **Server** (e.g. `192.168.0.10:8080`; `http://` is added if missing, paths like
   `http://host/api` work). Empty = the built-in demo data (`MockInventoryApi`). Use plain `http://`: Android 4.2 has
