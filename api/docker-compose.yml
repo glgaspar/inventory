@@ -1,38 +1,10 @@
 services:
-  db:
-    image: postgres:17-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: ${PG_USER}
-      POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_DB: ${PG_DBNAME}
-    ports:
-      - 5433:5432
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: pg_isready -U ${PG_USER}
-      interval: 2s
-      retries: 15
-
   api:
     build: .
     restart: always
     env_file: .env
-    environment:
-      PG_HOST: db
-      PG_PORT: 5432
     ports:
-      - 8080:8080
-    depends_on:
-      db:
-        condition: service_healthy
+      - ${HOST_PORT:-8080}:8080
     healthcheck:
       test: wget -q -O /dev/null http://localhost:8080/ || exit 1
       interval: 1m
-    labels:
-      front-desk.name: Inventario API
-      front-desk.dir: /inventario
-
-volumes:
-  pgdata:
