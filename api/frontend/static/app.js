@@ -352,7 +352,7 @@ function viewMovement(el) {
     const preview = h('div');
     let imageUrl = null;
     const close = () => { pending.replaceChildren(); barcode.focus(); };
-    const sourceNames = { openfoodfacts: 'Open Food Facts', openbeautyfacts: 'Open Beauty Facts', openproductsfacts: 'Open Products Facts', cosmos: 'Cosmos' };
+    const sourceNames = { openfoodfacts: 'Open Food Facts', openbeautyfacts: 'Open Beauty Facts', openproductsfacts: 'Open Products Facts' };
     api('GET', '/lookup/' + encodeURIComponent(code)).then(s => {
       if (!name.value) name.value = s.name;
       category.value = s.category;

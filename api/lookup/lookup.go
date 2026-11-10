@@ -8,7 +8,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -42,8 +41,6 @@ var OpenFacts = []source{
 	{"openproductsfacts", "https://world.openproductsfacts.org", "other"},
 	{"openbeautyfacts", "https://world.openbeautyfacts.org", "bathroom"},
 }
-
-var CosmosURL = "https://api.cosmos.bluesoft.com.br"
 
 const missTTL = "7 days"
 
@@ -143,19 +140,6 @@ func Find(barcode string) (Suggestion, error) {
 		}
 	}
 
-	if token := os.Getenv("COSMOS_TOKEN"); token != "" {
-		s, err := cosmos(token, barcode)
-		if err == nil {
-			if s.ImageURL == nil && partial != nil {
-				s.ImageURL = partial.ImageURL
-			}
-			return s, nil
-		}
-		if !errors.Is(err, errNotFound) {
-			failed = true
-		}
-	}
-
 	if partial != nil {
 		return *partial, nil
 	}
@@ -228,48 +212,6 @@ func openFacts(src source, barcode string) (Suggestion, error) {
 	}
 	if name == "" && s.ImageURL == nil {
 		return Suggestion{}, errNotFound
-	}
-	return defaults(s), nil
-}
-
-func cosmos(token, barcode string) (Suggestion, error) {
-	req, err := http.NewRequest("GET", CosmosURL+"/gtins/"+barcode+".json", nil)
-	if err != nil {
-		return Suggestion{}, err
-	}
-	req.Header.Set("X-Cosmos-Token", token)
-	req.Header.Set("User-Agent", "Cosmos-API-Request")
-	req.Header.Set("Content-Type", "application/json")
-	var body struct {
-		Description string `json:"description"`
-		Thumbnail   string `json:"thumbnail"`
-		Brand       struct {
-			Name string `json:"name"`
-		} `json:"brand"`
-		GPC struct {
-			Description string `json:"description"`
-		} `json:"gpc"`
-		NCM struct {
-			Description     string `json:"description"`
-			FullDescription string `json:"full_description"`
-		} `json:"ncm"`
-	}
-	if err := getJSON(req, &body); err != nil {
-		return Suggestion{}, err
-	}
-	if body.Description == "" {
-		return Suggestion{}, errNotFound
-	}
-	s := Suggestion{
-		Barcode:  barcode,
-		Name:     withBrand(body.Description, body.Brand.Name),
-		Brand:    body.Brand.Name,
-		Category: guessCategory(body.GPC.Description+" "+body.NCM.FullDescription+" "+body.NCM.Description+" "+body.Description, "kitchen"),
-		Source:   "cosmos",
-	}
-	s.Unit, s.PackageSize = parseQuantity(body.Description)
-	if body.Thumbnail != "" {
-		s.ImageURL = &body.Thumbnail
 	}
 	return defaults(s), nil
 }
@@ -348,5 +290,4 @@ func SetSources(baseURL string) {
 	for i := range OpenFacts {
 		OpenFacts[i].url = baseURL
 	}
-	CosmosURL = baseURL
 }

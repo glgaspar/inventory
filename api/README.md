@@ -9,7 +9,7 @@ Go (echo + Postgres) backend for the app. The contract is [docs/API.md](../docs/
 | `auth/` | login, logout, tokens, passwords, first admin |
 | `users/` | admin user management |
 | `activity/` | audit log: write and list |
-| `lookup/` | identifies unknown barcodes: Open Food/Products/Beauty Facts, then Cosmos if `COSMOS_TOKEN` is set; results cached in `lookups` |
+| `lookup/` | identifies unknown barcodes: Open Food/Products/Beauty Facts; results cached in `lookups` |
 | `images/` | downloads product photos from those sources and serves them over plain HTTP at `/images/{id}` (the CN51 can't do HTTPS) |
 | `products/`, `movements/` | the app's endpoints; `movements/` also builds the inventory |
 | `db/` | connection, schema, Postgres error → HTTP status |
@@ -35,7 +35,7 @@ Without `PG_HOST` the tests are skipped.
 
 Web UI: open `http://<host>:8080/web/` and log in with the same users as the app. It has the inventory, product history (with who sent each movement), entry/usage sessions by barcode (a USB barcode scanner works in the input), and, for admins, users and the activity log. Text follows the browser language (pt-BR or English). It keeps the token and an unsent session in `localStorage`.
 
-Unknown barcodes: `GET /lookup/{barcode}` asks Open Food Facts, Open Products Facts and Open Beauty Facts at the same time (free, no key). If none has a name and `COSMOS_TOKEN` is set, it asks Cosmos (paid, best Brazilian coverage, incl. cleaning/hygiene). Found products are cached forever, misses for 7 days, failures not at all, so each barcode costs at most one paid lookup. The result is only a suggestion: the user confirms or fixes it in the new-product form.
+Unknown barcodes: `GET /lookup/{barcode}` asks Open Food Facts, Open Products Facts and Open Beauty Facts at the same time (free, no key). Found products are cached forever, misses for 7 days, failures not at all. The result is only a suggestion: the user confirms or fixes it in the new-product form.
 
 Security notes:
 - It speaks plain HTTP because Android 4.2 can't do modern TLS, so passwords and tokens cross the network in the clear. Keep it on the LAN and don't publish it through Cloudflare.

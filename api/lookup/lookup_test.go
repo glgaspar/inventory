@@ -3,7 +3,6 @@ package lookup
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -73,8 +72,6 @@ func fakeOpenFacts(t *testing.T, food, products, beauty string) {
 const missing = `{"status":0,"status_verbose":"product not found"}`
 
 func TestFind(t *testing.T) {
-	t.Setenv("COSMOS_TOKEN", "")
-
 	fakeOpenFacts(t, `{"status":1,"product":{"product_name_pt":"Leite Condensado","brands":"Nestlé, Moça","quantity":"395 g","categories_tags":["en:dairies"],"image_front_url":"https://images.openfoodfacts.org/x.jpg"}}`,
 		`{"status":1,"product":{"product_name":"Something else"}}`, missing)
 	s, err := Find("7891000100103")
@@ -103,38 +100,5 @@ func TestFind(t *testing.T) {
 	fakeOpenFacts(t, "down", missing, missing)
 	if _, err = Find("1234567890123"); err == nil || err == errNotFound {
 		t.Fatalf("food db down must be an error, not a miss: %v", err)
-	}
-}
-
-func TestCosmos(t *testing.T) {
-	var gotToken, gotPath string
-	cosmosServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotToken, gotPath = r.Header.Get("X-Cosmos-Token"), r.URL.Path
-		if strings.Contains(r.URL.Path, "000") {
-			w.WriteHeader(404)
-			return
-		}
-		w.Write([]byte(`{"description":"PAPEL HIGIENICO NEVE FOLHA DUPLA 12 UN","thumbnail":"https://cdn-cosmos.bluesoft.com.br/p.png","brand":{"name":"NEVE"},"gpc":{"description":"Papel Higiênico"},"ncm":{"description":"Papel higiênico"}}`))
-	}))
-	defer cosmosServer.Close()
-	old := CosmosURL
-	CosmosURL = cosmosServer.URL
-	defer func() { CosmosURL = old }()
-
-	fakeOpenFacts(t, missing, missing, missing)
-	t.Setenv("COSMOS_TOKEN", "secret")
-	s, err := Find("7891172422102")
-	if err != nil || gotToken != "secret" || gotPath != "/gtins/7891172422102.json" || s.Source != "cosmos" ||
-		s.Name != "PAPEL HIGIENICO NEVE FOLHA DUPLA 12 UN" || s.Category != "bathroom" || s.Unit != "un" || s.PackageSize != 12 {
-		t.Fatalf("cosmos: %+v %v (token %q path %q)", s, err, gotToken, gotPath)
-	}
-	if _, err := Find("7891000000000"); err != errNotFound {
-		t.Fatalf("cosmos 404: %v", err)
-	}
-
-	t.Setenv("COSMOS_TOKEN", "")
-	gotPath = ""
-	if _, err := Find("7891172422102"); err != errNotFound || gotPath != "" {
-		t.Fatalf("no token must skip cosmos: %v %q", err, gotPath)
 	}
 }

@@ -309,7 +309,6 @@ func TestLookup(t *testing.T) {
 	defer fake.Close()
 	lookup.SetSources(fake.URL)
 	images.AllowedHosts = append(images.AllowedHosts, "127.0.0.1")
-	t.Setenv("COSMOS_TOKEN", "")
 
 	var s lookup.Suggestion
 	c.call("GET", "/lookup/7891000100103", "", 200, &s)

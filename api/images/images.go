@@ -16,7 +16,7 @@ import (
 
 const maxSize = 3 << 20
 
-var AllowedHosts = []string{"openfoodfacts.org", "openbeautyfacts.org", "openproductsfacts.org", "bluesoft.com.br"}
+var AllowedHosts = []string{"openfoodfacts.org", "openbeautyfacts.org", "openproductsfacts.org"}
 
 var client = &http.Client{Timeout: 10 * time.Second}
 

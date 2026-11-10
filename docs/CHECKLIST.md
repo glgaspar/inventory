@@ -44,7 +44,7 @@ smoke-tested in an emulator (`API 17` system image) or wait for the device.
 - [x] `docker compose up` (api + postgres) builds and answers
 - [x] Users, bearer-token login, admin/user roles, audit log (`/activity`), user on every batch, JSON request logs, login rate limit, security headers, body limit, server timeouts
 - [x] Web UI at `/web/` (inventory, history, entry/usage sessions, users, activity, password), checked in headless Chrome, desktop + phone width, pt-BR + en
-- [x] Unknown barcodes: `/lookup` (Open Food/Products/Beauty Facts, optional paid Cosmos), cached, photos re-served over HTTP; web form prefills
+- [x] Unknown barcodes: `/lookup` (Open Food/Products/Beauty Facts), cached, photos re-served over HTTP; web form prefills
 - [ ] App: login screen + use `/lookup` in the register dialog + `Authorization` header + 401 → back to login (needs the Android SDK reinstalled)
 - [ ] Point the app (Server setting) at the real API from the emulator / CN51
 - [ ] Deploy on the home server

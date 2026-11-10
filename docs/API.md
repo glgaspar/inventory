@@ -101,7 +101,7 @@ All of these need a logged-in user (any role).
   "unit": "mL",
   "packageSize": 500,
   "imageUrl": "http://host/images/3834ee75…",   // send it back as the product's imageUrl; may be null
-  "source": "openproductsfacts"                  // openfoodfacts | openproductsfacts | openbeautyfacts | cosmos
+  "source": "openproductsfacts"                  // openfoodfacts | openproductsfacts | openbeautyfacts
 }
 
 // ActivityEntry  (audit log)
