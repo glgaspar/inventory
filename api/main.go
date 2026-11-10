@@ -36,7 +36,7 @@ func main() {
 		Handler:           server.New(conn),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		WriteTimeout:      2 * time.Minute,
 		IdleTimeout:       2 * time.Minute,
 	}
 	slog.Info("listening", "port", port)

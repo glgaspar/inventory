@@ -21,6 +21,10 @@ const strings = {
     currentPassword: 'Current password', newPassword: 'New password', confirmPassword: 'Repeat the new password',
     passwordMismatch: 'The new passwords are different', passwordChanged: 'Password changed. Other devices were logged out.',
     loadFailed: 'Could not load: %1',
+    recipes: 'Recipes', recipeHint: 'Anything in mind? e.g. quick lunch, no oven', suggest: 'Suggest recipes', again: 'Suggest others',
+    thinking: 'Thinking… this can take up to a minute', minutes: '%1 min', servings: '%1 servings', ingredients: 'Ingredients',
+    steps: 'Steps', missingItems: 'To buy: %1', fromStock: 'in stock', recipesOff: 'Recipe suggestions are not configured on the server.',
+    noKitchenStock: 'There is nothing from the kitchen in stock to cook with.', suggestedBy: 'Suggested by %1 · %2', cachedNote: ' (saved)',
   },
   pt: {
     app: 'Inventário', inventory: 'Estoque', movement: 'Movimentação', users: 'Usuários', activity: 'Atividade',
@@ -42,6 +46,10 @@ const strings = {
     currentPassword: 'Senha atual', newPassword: 'Nova senha', confirmPassword: 'Repita a nova senha',
     passwordMismatch: 'As novas senhas são diferentes', passwordChanged: 'Senha alterada. Os outros aparelhos foram desconectados.',
     loadFailed: 'Não foi possível carregar: %1',
+    recipes: 'Receitas', recipeHint: 'Alguma ideia? ex.: almoço rápido, sem forno', suggest: 'Sugerir receitas', again: 'Sugerir outras',
+    thinking: 'Pensando… pode levar até um minuto', minutes: '%1 min', servings: '%1 porções', ingredients: 'Ingredientes',
+    steps: 'Modo de preparo', missingItems: 'Falta comprar: %1', fromStock: 'no estoque', recipesOff: 'As sugestões de receitas não estão configuradas no servidor.',
+    noKitchenStock: 'Não há nada da cozinha no estoque para cozinhar.', suggestedBy: 'Sugerido por %1 · %2', cachedNote: ' (salvo)',
   },
 };
 
@@ -128,6 +136,7 @@ const routes = {
   inventory: viewInventory,
   product: viewProduct,
   movement: viewMovement,
+  recipes: viewRecipes,
   users: viewUsers,
   activity: viewActivity,
   password: viewPassword,
@@ -165,6 +174,7 @@ function nav(current) {
     h('span', { class: 'brand' }, t('app')),
     link('inventory', t('inventory')),
     link('movement', t('movement')),
+    link('recipes', t('recipes')),
     me.admin && link('users', t('users')),
     me.admin && link('activity', t('activity')),
     h('span', { class: 'spacer' }),
@@ -433,6 +443,53 @@ function viewMovement(el) {
     h('div', { class: 'row end' }, discardButton, sendButton),
   );
   barcode.focus();
+}
+
+function viewRecipes(el) {
+  const hint = h('input', { class: 'grow', maxlength: '200', placeholder: t('recipeHint'), value: load('recipeHint') || '' });
+  const button = h('button', null, t('suggest'));
+  const result = h('div');
+  let shown = false;
+
+  async function suggest(refresh) {
+    store('recipeHint', hint.value);
+    button.disabled = true;
+    result.replaceChildren(h('p', { class: 'muted' }, t('thinking')));
+    try {
+      const r = await api('POST', '/recipes/suggest', { hint: hint.value, lang, refresh });
+      result.replaceChildren(
+        h('p', { class: 'faint' }, t('suggestedBy', r.model, when(r.generatedAt)) + (r.cached ? t('cachedNote') : '')),
+        ...r.recipes.map(recipeCard));
+      shown = true;
+      button.textContent = t('again');
+    } catch (e) {
+      if (e.status === 401) return;
+      const text = e.status === 503 ? t('recipesOff') : e.status === 409 ? t('noKitchenStock') : e.message;
+      result.replaceChildren(h('p', { class: 'error' }, text));
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  button.addEventListener('click', () => suggest(shown));
+  hint.addEventListener('keydown', e => { if (e.key === 'Enter') suggest(false); });
+  hint.addEventListener('input', () => { shown = false; button.textContent = t('suggest'); });
+  el.replaceChildren(h('h1', null, t('recipes')), h('div', { class: 'row' }, hint, button), result);
+}
+
+function recipeCard(r) {
+  return h('div', { class: 'card recipe' },
+    h('h2', null, r.title),
+    r.summary && h('p', { class: 'muted' }, r.summary),
+    h('p', { class: 'faint' }, [r.minutes && t('minutes', r.minutes), r.servings && t('servings', r.servings)].filter(Boolean).join(' · ')),
+    h('h3', null, t('ingredients')),
+    h('ul', null, r.ingredients.map(i => h('li', null,
+      [i.amount, i.name].filter(Boolean).join(' '),
+      i.fromStock && h('span', { class: 'pill in' }, t('fromStock'))))),
+    r.missing.length > 0 && h('p', { class: 'error' }, t('missingItems', r.missing.join(', '))),
+    h('h3', null, t('steps')),
+    h('ol', null, r.steps.map(s => h('li', null, s))),
+  );
 }
 
 async function viewUsers(el) {

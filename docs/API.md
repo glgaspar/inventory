@@ -46,6 +46,7 @@ All of these need a logged-in user (any role).
 | 5 | `GET /products/{id}` | product detail | — | `200 Product` |
 | 6 | `GET /products/{id}/movements` | product history | — | `200 [Movement]` newest first |
 | 7 | `GET /lookup/{barcode}` | after a `404` on 1, to prefill the register dialog | — | `200 Suggestion` / `404` unknown everywhere / `502` a source is down, try again |
+| 9 | `POST /recipes/suggest` | recipe ideas from the kitchen stock | `{ "hint": "almoço rápido", "lang": "pt", "refresh": false }` all optional | `200 { "recipes": [Recipe], "model", "generatedAt", "cached" }` / `503` not configured / `409` nothing in the kitchen / `502` model failed |
 | 8 | `GET /images/{id}` | product photos (no token needed, plain HTTP) | — | image |
 
 ## Types
@@ -104,13 +105,24 @@ All of these need a logged-in user (any role).
   "source": "openproductsfacts"                  // openfoodfacts | openproductsfacts | openbeautyfacts
 }
 
+// Recipe  (AI suggestion, may contain mistakes)
+{
+  "title": "Arroz carreteiro simples",
+  "summary": "…",
+  "minutes": 35,
+  "servings": 4,
+  "ingredients": [ { "name": "arroz", "amount": "2 xícaras", "fromStock": true } ],
+  "missing": [ "cebola" ],       // to buy
+  "steps": [ "Refogue a cebola…", "…" ]
+}
+
 // ActivityEntry  (audit log)
 {
   "id": 88,
   "userId": 3,           // null for a failed login with an unknown username
   "username": "maria",
   "action": "movements.create",   // login, login.failed, logout, password.change, user.create,
-                                  // user.update, product.create, movements.create
+                                  // user.update, product.create, movements.create, recipes.suggest
   "details": { "batchId": 42, "type": "in", "items": 2 },
   "ip": "192.168.0.23",
   "at": "2026-09-22T13:05:00Z"

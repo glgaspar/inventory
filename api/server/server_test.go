@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -43,7 +44,7 @@ type client struct {
 }
 
 func setup(t *testing.T) *client {
-	if _, err := conn.Exec("drop table if exists activity, movements, batches, products, tokens, users, lookups, images"); err != nil {
+	if _, err := conn.Exec("drop table if exists activity, movements, batches, products, tokens, users, lookups, images, recipe_suggestions"); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.Migrate(conn); err != nil {
@@ -355,4 +356,80 @@ func TestLookup(t *testing.T) {
 	if !strings.HasPrefix(stored, "/images/") || p.ImageURL == nil || *p.ImageURL != *s.ImageURL {
 		t.Fatalf("stored %q, returned %v", stored, p.ImageURL)
 	}
+}
+
+func TestRecipes(t *testing.T) {
+	c := setup(t)
+	t.Setenv("RECIPES_API_URL", "")
+	c.call("POST", "/recipes/suggest", `{}`, 503, nil)
+
+	var calls int
+	var lastBody map[string]any
+	var lastAuth string
+	answer := `{"recipes":[{"title":"Arroz com feijão","summary":"Clássico","minutes":40,"servings":4,"ingredients":[{"name":"arroz","amount":"1 xícara","fromStock":true}],"missing":["alho"],"steps":["Cozinhe o arroz"]}]}`
+	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		lastAuth = r.Header.Get("Authorization")
+		json.NewDecoder(r.Body).Decode(&lastBody)
+		if r.URL.Path != "/api/chat/completions" {
+			w.WriteHeader(404)
+			return
+		}
+		content := answer
+		if strings.Contains(fmt.Sprint(lastBody), "broken") {
+			content = "desculpe, não consigo"
+		}
+		json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": "```json\n" + content + "\n```"}}}})
+	}))
+	defer fake.Close()
+	t.Setenv("RECIPES_API_URL", fake.URL+"/api/")
+	t.Setenv("RECIPES_API_KEY", "webui-key")
+	t.Setenv("RECIPES_MODEL", "claude-test")
+
+	c.call("POST", "/recipes/suggest", `{}`, 409, nil)
+
+	c.call("POST", "/products", rice, 201, nil)
+	c.call("POST", "/products", soap, 201, nil)
+	c.call("POST", "/products", `{"barcode":"791","name":"Feijão 1kg","category":"kitchen","unit":"kg","packageSize":1}`, 201, nil)
+	c.call("POST", "/movements", `{"type":"in","at":"2026-09-01T10:00:00Z","items":[
+		{"productId":1,"packages":1,"amount":5},{"productId":2,"packages":3,"amount":3},{"productId":3,"packages":1,"amount":1}]}`, 201, nil)
+	c.call("POST", "/movements", `{"type":"out","at":"2026-09-02T10:00:00Z","items":[{"productId":3,"packages":1,"amount":1}]}`, 201, nil)
+
+	var r struct {
+		Recipes []struct {
+			Title   string
+			Missing []string
+		}
+		Model  string
+		Cached bool
+	}
+	c.call("POST", "/recipes/suggest", `{"hint":"almoço"}`, 200, &r)
+	if len(r.Recipes) != 1 || r.Recipes[0].Title != "Arroz com feijão" || r.Model != "claude-test" || r.Cached || calls != 1 {
+		t.Fatalf("suggest %+v calls %d", r, calls)
+	}
+	if lastAuth != "Bearer webui-key" || lastBody["model"] != "claude-test" {
+		t.Fatalf("request auth %q body %v", lastAuth, lastBody)
+	}
+	sent := fmt.Sprint(lastBody["messages"])
+	if !strings.Contains(sent, "Arroz 5kg: 5 kg") || strings.Contains(sent, "Sabonete") || strings.Contains(sent, "Feijão") ||
+		!strings.Contains(sent, "almoço") || !strings.Contains(sent, "português") {
+		t.Fatalf("prompt should list kitchen stock only: %s", sent)
+	}
+
+	c.call("POST", "/recipes/suggest", `{"hint":"almoço"}`, 200, &r)
+	if !r.Cached || calls != 1 {
+		t.Fatalf("second call should be cached: %+v calls %d", r, calls)
+	}
+	c.call("POST", "/recipes/suggest", `{"hint":"almoço","refresh":true}`, 200, &r)
+	if r.Cached || calls != 2 {
+		t.Fatalf("refresh should ask again: calls %d", calls)
+	}
+	c.call("POST", "/recipes/suggest", `{"hint":"almoço","lang":"en"}`, 200, nil)
+	if calls != 3 || !strings.Contains(fmt.Sprint(lastBody["messages"]), "Write in English") {
+		t.Fatalf("english prompt: %v", lastBody["messages"])
+	}
+
+	c.call("POST", "/recipes/suggest", `{"hint":"broken"}`, 502, nil)
+	c.call("POST", "/recipes/suggest", `{"hint":"`+strings.Repeat("a", 201)+`"}`, 400, nil)
+	(&client{t: t, e: c.e}).call("POST", "/recipes/suggest", `{}`, 401, nil)
 }

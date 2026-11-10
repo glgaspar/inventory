@@ -13,6 +13,7 @@ import (
 	"github.com/glgaspar/inventory/api/lookup"
 	"github.com/glgaspar/inventory/api/movements"
 	"github.com/glgaspar/inventory/api/products"
+	"github.com/glgaspar/inventory/api/recipes"
 	"github.com/glgaspar/inventory/api/users"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -41,6 +42,9 @@ func New(db *sql.DB) *echo.Echo {
 	log := activity.Handler{DB: db}
 	l := lookup.Handler{DB: db}
 	img := images.Handler{DB: db}
+	r := recipes.Handler{DB: db}
+	recipeLimit := middleware.RateLimiter(middleware.NewRateLimiterMemoryStoreWithConfig(
+		middleware.RateLimiterMemoryStoreConfig{Rate: 0.1, Burst: 10, ExpiresIn: 10 * time.Minute}))
 
 	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusOK) })
 	frontend.Register(e)
@@ -58,6 +62,7 @@ func New(db *sql.DB) *echo.Echo {
 	e.GET("/products/:id/movements", m.ByProduct, user)
 	e.POST("/movements", m.Create, user)
 	e.GET("/inventory", m.Inventory, user)
+	e.POST("/recipes/suggest", r.Suggest, user, recipeLimit)
 
 	e.GET("/users", u.List, admin...)
 	e.POST("/users", u.Create, admin...)

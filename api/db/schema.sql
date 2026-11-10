@@ -64,3 +64,9 @@ create table if not exists images (
     data bytea not null,
     created_at timestamptz not null default now()
 );
+
+create table if not exists recipe_suggestions (
+    key text primary key,
+    result jsonb not null,
+    created_at timestamptz not null default now()
+);

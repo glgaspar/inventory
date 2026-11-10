@@ -11,6 +11,7 @@ Go (echo + Postgres) backend for the app. The contract is [docs/API.md](../docs/
 | `activity/` | audit log: write and list |
 | `lookup/` | identifies unknown barcodes: Open Food/Products/Beauty Facts; results cached in `lookups` |
 | `images/` | downloads product photos from those sources and serves them over plain HTTP at `/images/{id}` (the CN51 can't do HTTPS) |
+| `recipes/` | recipe suggestions from the kitchen stock through any OpenAI-compatible chat API (Open WebUI → Claude/Gemini, or Ollama) |
 | `products/`, `movements/` | the app's endpoints; `movements/` also builds the inventory |
 | `db/` | connection, schema, Postgres error → HTTP status |
 | `web/` | small shared helpers |
@@ -37,9 +38,12 @@ Web UI: open `http://<host>:8080/web/` and log in with the same users as the app
 
 Unknown barcodes: `GET /lookup/{barcode}` asks Open Food Facts, Open Products Facts and Open Beauty Facts at the same time (free, no key). Found products are cached forever, misses for 7 days, failures not at all. The result is only a suggestion: the user confirms or fixes it in the new-product form.
 
+Recipes: `POST /recipes/suggest` sends the kitchen items in stock (name and amount, nothing else) and an optional hint to the model set in `RECIPES_*`, asks for 3 recipes as JSON and returns them. Answers are cached per stock + hint + language + model, so asking again without changes is free; `refresh: true` asks for new ones. To use Open WebUI's Claude/Gemini connections: `RECIPES_API_URL=http://<server>:3024/api`, `RECIPES_API_KEY` = an Open WebUI API key, `RECIPES_MODEL` = a model id from Open WebUI's `/api/models`. Empty = the feature is off (`503`).
+
 Security notes:
 - It speaks plain HTTP because Android 4.2 can't do modern TLS, so passwords and tokens cross the network in the clear. Keep it on the LAN and don't publish it through Cloudflare.
 - Client IPs come from the TCP connection, not `X-Forwarded-For`. If it ever runs behind a proxy, the login rate limit (10 tries, then 1 every 10 s per IP) would be shared by everyone, so change `IPExtractor` in `server/server.go`.
 - The UI sets all text with `textContent` and the CSP only allows scripts and styles from the server itself, so a product name can't inject script.
 - Product photos are only downloaded from the lookup sources' hosts (`images.AllowedHosts`), at most 3 MB, and must really be an image.
+- Recipe calls cost money on paid models, so they are rate-limited per IP (10, then 1 every 10 s) and logged in `activity` as `recipes.suggest`.
 - Logs are JSON on stdout, one line per request (user and request id included). Who did what is in the `activity` table (`GET /activity`, admins only).
