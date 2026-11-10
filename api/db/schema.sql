@@ -51,3 +51,16 @@ create table if not exists activity (
     ip text not null,
     at timestamptz not null default now()
 );
+
+create table if not exists lookups (
+    barcode text primary key,
+    result jsonb,
+    fetched_at timestamptz not null default now()
+);
+
+create table if not exists images (
+    id text primary key,
+    content_type text not null,
+    data bytea not null,
+    created_at timestamptz not null default now()
+);

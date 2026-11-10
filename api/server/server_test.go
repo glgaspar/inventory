@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -13,6 +14,8 @@ import (
 	"github.com/glgaspar/inventory/api/activity"
 	"github.com/glgaspar/inventory/api/auth"
 	"github.com/glgaspar/inventory/api/db"
+	"github.com/glgaspar/inventory/api/images"
+	"github.com/glgaspar/inventory/api/lookup"
 	"github.com/glgaspar/inventory/api/movements"
 	"github.com/glgaspar/inventory/api/products"
 	"github.com/labstack/echo/v4"
@@ -40,7 +43,7 @@ type client struct {
 }
 
 func setup(t *testing.T) *client {
-	if _, err := conn.Exec("drop table if exists activity, movements, batches, products, tokens, users"); err != nil {
+	if _, err := conn.Exec("drop table if exists activity, movements, batches, products, tokens, users, lookups, images"); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.Migrate(conn); err != nil {
@@ -281,5 +284,76 @@ func TestFrontend(t *testing.T) {
 		if !strings.Contains(rec.Header().Get("Content-Security-Policy"), "default-src 'self'") {
 			t.Fatalf("GET %s: no CSP", path)
 		}
+	}
+}
+
+func TestLookup(t *testing.T) {
+	c := setup(t)
+	png := []byte("\x89PNG\r\n\x1a\n" + strings.Repeat("\x00", 64))
+	hits := 0
+	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/img"):
+			w.Write(png)
+		case strings.Contains(r.URL.Path, "7891000100103"):
+			hits++
+			w.Write([]byte(`{"status":1,"product":{"product_name_pt":"Leite Condensado","brands":"Moça","quantity":"395 g","image_front_url":"` +
+				"http://" + r.Host + `/img.png"}}`))
+		case strings.Contains(r.URL.Path, "5555555555555"):
+			w.WriteHeader(502)
+		default:
+			hits++
+			w.Write([]byte(`{"status":0}`))
+		}
+	}))
+	defer fake.Close()
+	lookup.SetSources(fake.URL)
+	images.AllowedHosts = append(images.AllowedHosts, "127.0.0.1")
+	t.Setenv("COSMOS_TOKEN", "")
+
+	var s lookup.Suggestion
+	c.call("GET", "/lookup/7891000100103", "", 200, &s)
+	if s.Name != "Leite Condensado Moça" || s.Unit != "g" || s.PackageSize != 395 || s.ImageURL == nil ||
+		!strings.HasPrefix(*s.ImageURL, "http://example.com/images/") {
+		t.Fatalf("lookup %+v", s)
+	}
+	before := hits
+	c.call("GET", "/lookup/7891000100103", "", 200, nil)
+	if hits != before {
+		t.Fatal("second lookup was not cached")
+	}
+
+	rec := httptest.NewRecorder()
+	c.e.ServeHTTP(rec, httptest.NewRequest("GET", strings.TrimPrefix(*s.ImageURL, "http://example.com"), nil))
+	if rec.Code != 200 || rec.Header().Get("Content-Type") != "image/png" || rec.Body.String() != string(png) {
+		t.Fatalf("image: %d %s", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	rec = httptest.NewRecorder()
+	c.e.ServeHTTP(rec, httptest.NewRequest("GET", "/images/nope", nil))
+	if rec.Code != 404 {
+		t.Fatalf("missing image: %d", rec.Code)
+	}
+
+	c.call("GET", "/lookup/1111111111111", "", 404, nil)
+	before = hits
+	c.call("GET", "/lookup/1111111111111", "", 404, nil)
+	if hits != before {
+		t.Fatal("miss was not cached")
+	}
+	c.call("GET", "/lookup/5555555555555", "", 502, nil)
+	var cached int
+	conn.QueryRow("select count(*) from lookups where barcode = '5555555555555'").Scan(&cached)
+	if cached != 0 {
+		t.Fatal("a failed lookup must not be cached")
+	}
+	c.call("GET", "/lookup/abc", "", 404, nil)
+	(&client{t: t, e: c.e}).call("GET", "/lookup/7891000100103", "", 401, nil)
+
+	var p products.Product
+	c.call("POST", "/products", `{"barcode":"7891000100103","name":"Leite","category":"kitchen","unit":"g","packageSize":395,"imageUrl":"`+*s.ImageURL+`"}`, 201, &p)
+	var stored string
+	conn.QueryRow("select image_url from products where id = $1", p.ID).Scan(&stored)
+	if !strings.HasPrefix(stored, "/images/") || p.ImageURL == nil || *p.ImageURL != *s.ImageURL {
+		t.Fatalf("stored %q, returned %v", stored, p.ImageURL)
 	}
 }

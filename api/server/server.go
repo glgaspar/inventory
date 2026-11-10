@@ -9,6 +9,8 @@ import (
 	"github.com/glgaspar/inventory/api/activity"
 	"github.com/glgaspar/inventory/api/auth"
 	"github.com/glgaspar/inventory/api/frontend"
+	"github.com/glgaspar/inventory/api/images"
+	"github.com/glgaspar/inventory/api/lookup"
 	"github.com/glgaspar/inventory/api/movements"
 	"github.com/glgaspar/inventory/api/products"
 	"github.com/glgaspar/inventory/api/users"
@@ -37,9 +39,12 @@ func New(db *sql.DB) *echo.Echo {
 	m := movements.Handler{DB: db}
 	u := users.Handler{DB: db}
 	log := activity.Handler{DB: db}
+	l := lookup.Handler{DB: db}
+	img := images.Handler{DB: db}
 
 	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusOK) })
 	frontend.Register(e)
+	e.GET("/images/:id", img.Get)
 
 	e.POST("/login", a.Login, loginLimit)
 	e.POST("/logout", a.Logout, user)
@@ -48,6 +53,7 @@ func New(db *sql.DB) *echo.Echo {
 
 	e.GET("/products/by-barcode/:barcode", p.ByBarcode, user)
 	e.POST("/products", p.Create, user)
+	e.GET("/lookup/:barcode", l.Get, user)
 	e.GET("/products/:id", p.Get, user)
 	e.GET("/products/:id/movements", m.ByProduct, user)
 	e.POST("/movements", m.Create, user)

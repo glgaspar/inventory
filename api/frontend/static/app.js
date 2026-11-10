@@ -12,6 +12,7 @@ const strings = {
     historyEmpty: 'No movements yet', when: 'When', type: 'Type', user: 'User', in: 'Entry', out: 'Usage',
     scanHint: 'Scan or type a barcode and press Enter', sessionEmpty: 'Scan a product to add it',
     newProduct: 'New product', unknownBarcode: 'Barcode %1 is not registered yet', send: 'Send',
+    searching: 'Searching product databases…', foundIn: 'Found in %1, check before saving', notFoundOnline: 'Not found online, fill it in',
     discard: 'Discard', discardConfirm: 'Discard the items in this movement?', sent: 'Movement sent',
     remove: 'Remove', fewer: 'Fewer packages', more: 'More packages',
     newUser: 'New user', admin: 'Admin', active: 'Active', created: 'Created', resetPassword: 'Reset password',
@@ -32,6 +33,7 @@ const strings = {
     historyEmpty: 'Nenhuma movimentação ainda', when: 'Quando', type: 'Tipo', user: 'Usuário', in: 'Entrada', out: 'Consumo',
     scanHint: 'Leia ou digite um código e aperte Enter', sessionEmpty: 'Leia um produto para adicioná-lo',
     newProduct: 'Novo produto', unknownBarcode: 'O código %1 ainda não está cadastrado', send: 'Enviar',
+    searching: 'Buscando nas bases de produtos…', foundIn: 'Encontrado em %1, confira antes de salvar', notFoundOnline: 'Não encontrado na internet, preencha os dados',
     discard: 'Descartar', discardConfirm: 'Descartar os itens desta movimentação?', sent: 'Movimentação enviada',
     remove: 'Remover', fewer: 'Menos pacotes', more: 'Mais pacotes',
     newUser: 'Novo usuário', admin: 'Admin', active: 'Ativo', created: 'Criado', resetPassword: 'Redefinir senha',
@@ -346,7 +348,22 @@ function viewMovement(el) {
     const category = h('select', null, categories.map(c => h('option', { value: c }, t(c))));
     const unit = h('select', null, units.map(u => h('option', { value: u }, u)));
     const size = h('input', { class: 'small', type: 'number', min: '0', step: 'any', required: true, value: '1' });
+    const status = h('p', { class: 'faint' }, t('searching'));
+    const preview = h('div');
+    let imageUrl = null;
     const close = () => { pending.replaceChildren(); barcode.focus(); };
+    const sourceNames = { openfoodfacts: 'Open Food Facts', openbeautyfacts: 'Open Beauty Facts', openproductsfacts: 'Open Products Facts', cosmos: 'Cosmos' };
+    api('GET', '/lookup/' + encodeURIComponent(code)).then(s => {
+      if (!name.value) name.value = s.name;
+      category.value = s.category;
+      unit.value = s.unit;
+      size.value = s.packageSize;
+      imageUrl = s.imageUrl;
+      if (imageUrl) preview.replaceChildren(h('img', { src: imageUrl, alt: '', class: 'thumb' }));
+      status.textContent = t('foundIn', sourceNames[s.source] || s.source);
+    }).catch(e => {
+      status.textContent = e.status === 404 ? t('notFoundOnline') : e.message;
+    });
     const form = h('form', {
       class: 'line',
       onsubmit: async e => {
@@ -354,7 +371,7 @@ function viewMovement(el) {
         try {
           add(await api('POST', '/products', {
             barcode: code, name: name.value.trim(), category: category.value, unit: unit.value,
-            packageSize: Number(size.value), imageUrl: null,
+            packageSize: Number(size.value), imageUrl,
           }));
           close();
         } catch (err) {
@@ -370,7 +387,7 @@ function viewMovement(el) {
       h('button', { type: 'button', class: 'outline', onclick: close }, t('cancel')),
     );
     setTimeout(() => name.focus());
-    return h('div', { class: 'card' }, h('h3', null, t('newProduct')), h('p', { class: 'muted' }, t('unknownBarcode', code)), form);
+    return h('div', { class: 'card' }, h('h3', null, t('newProduct')), h('p', { class: 'muted' }, t('unknownBarcode', code)), status, preview, form);
   }
 
   async function send() {

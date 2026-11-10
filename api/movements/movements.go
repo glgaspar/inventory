@@ -103,6 +103,7 @@ func (h Handler) Inventory(c echo.Context) error {
 			return err
 		}
 		i.UpdatedAt = web.ISO(updatedAt)
+		i.Product.ImageURL = web.AbsURL(c, i.Product.ImageURL)
 		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {

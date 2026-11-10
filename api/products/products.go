@@ -48,6 +48,7 @@ func (h Handler) one(c echo.Context, where string, arg any) error {
 	if err := h.DB.QueryRow("select "+Columns+" from products p where "+where, arg).Scan(p.Fields()...); err != nil {
 		return db.HTTPError(err)
 	}
+	p.ImageURL = web.AbsURL(c, p.ImageURL)
 	return c.JSON(http.StatusOK, p)
 }
 
@@ -56,6 +57,7 @@ func (h Handler) Create(c echo.Context) error {
 	if err := c.Bind(&p); err != nil {
 		return err
 	}
+	p.ImageURL = web.LocalPath(c, p.ImageURL)
 	err := h.DB.QueryRow(`insert into products (barcode, name, category, unit, package_size, image_url)
 		values ($1, $2, $3, $4, $5, $6) returning id`,
 		p.Barcode, p.Name, p.Category, p.Unit, p.PackageSize, p.ImageURL).Scan(&p.ID)
@@ -63,5 +65,6 @@ func (h Handler) Create(c echo.Context) error {
 		return db.HTTPError(err)
 	}
 	activity.Log(h.DB, c, auth.CurrentID(c), "product.create", map[string]any{"id": p.ID, "barcode": p.Barcode, "name": p.Name})
+	p.ImageURL = web.AbsURL(c, p.ImageURL)
 	return c.JSON(http.StatusCreated, p)
 }

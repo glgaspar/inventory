@@ -45,6 +45,8 @@ All of these need a logged-in user (any role).
 | 4 | `GET /inventory` | inventory list | — | `200 [InventoryItem]` |
 | 5 | `GET /products/{id}` | product detail | — | `200 Product` |
 | 6 | `GET /products/{id}/movements` | product history | — | `200 [Movement]` newest first |
+| 7 | `GET /lookup/{barcode}` | after a `404` on 1, to prefill the register dialog | — | `200 Suggestion` / `404` unknown everywhere / `502` a source is down, try again |
+| 8 | `GET /images/{id}` | product photos (no token needed, plain HTTP) | — | image |
 
 ## Types
 
@@ -88,6 +90,18 @@ All of these need a logged-in user (any role).
     { "productId": 12, "packages": 2, "amount": 10 },
     { "productId": 7,  "packages": 1, "amount": 1 }
   ]
+}
+
+// Suggestion  (from /lookup; all fields may need fixing by the user, name may be "")
+{
+  "barcode": "7896098900215",
+  "name": "Lava louças (maçã) Ypê",
+  "brand": "Ypê",
+  "category": "cleaning",
+  "unit": "mL",
+  "packageSize": 500,
+  "imageUrl": "http://host/images/3834ee75…",   // send it back as the product's imageUrl; may be null
+  "source": "openproductsfacts"                  // openfoodfacts | openproductsfacts | openbeautyfacts | cosmos
 }
 
 // ActivityEntry  (audit log)
