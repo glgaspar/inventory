@@ -70,3 +70,6 @@ create table if not exists recipe_suggestions (
     result jsonb not null,
     created_at timestamptz not null default now()
 );
+
+alter table batches add column if not exists undone_at timestamptz;
+alter table batches add column if not exists undone_by bigint references users (id);

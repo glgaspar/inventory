@@ -433,3 +433,124 @@ func TestRecipes(t *testing.T) {
 	c.call("POST", "/recipes/suggest", `{"hint":"`+strings.Repeat("a", 201)+`"}`, 400, nil)
 	(&client{t: t, e: c.e}).call("POST", "/recipes/suggest", `{}`, 401, nil)
 }
+
+func TestProductEditing(t *testing.T) {
+	admin := setup(t)
+	admin.call("POST", "/users", `{"username":"maria","password":"maria-password"}`, 201, nil)
+	c := admin.login("maria", "maria-password")
+	c.call("POST", "/products", rice, 201, nil)
+	c.call("POST", "/products", soap, 201, nil)
+
+	var all []products.Product
+	c.call("GET", "/products", "", 200, &all)
+	if len(all) != 2 || all[0].Name != "Arroz 5kg" || all[1].Name != "Sabonete" {
+		t.Fatalf("list %+v", all)
+	}
+
+	var p products.Product
+	c.call("PATCH", "/products/1", `{"name":"Arroz Tio João 5kg","packageSize":2.5}`, 200, &p)
+	if p.Name != "Arroz Tio João 5kg" || p.PackageSize != 2.5 || p.Barcode != "789" || p.Category != "kitchen" {
+		t.Fatalf("patched %+v", p)
+	}
+	c.call("PATCH", "/products/1", `{"barcode":"790"}`, 409, nil)
+	c.call("PATCH", "/products/1", `{"category":"garage"}`, 400, nil)
+	c.call("PATCH", "/products/1", `{"packageSize":0}`, 400, nil)
+	c.call("PATCH", "/products/99", `{"name":"x"}`, 404, nil)
+
+	c.call("POST", "/movements", `{"type":"in","at":"2026-09-01T10:00:00Z","items":[{"productId":1,"packages":1,"amount":2.5}]}`, 201, nil)
+	c.call("DELETE", "/products/1", "", 409, nil)
+	c.call("DELETE", "/products/2", "", 204, nil)
+	c.call("GET", "/products/2", "", 404, nil)
+	c.call("DELETE", "/products/2", "", 404, nil)
+
+	png := "\x89PNG\r\n\x1a\n" + strings.Repeat("\x00", 64)
+	req := httptest.NewRequest("PUT", "/products/1/image", strings.NewReader(png))
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Content-Type", "image/png")
+	rec := httptest.NewRecorder()
+	c.e.ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatalf("upload: %d %s", rec.Code, rec.Body)
+	}
+	json.Unmarshal(rec.Body.Bytes(), &p)
+	if p.ImageURL == nil || !strings.HasPrefix(*p.ImageURL, "http://example.com/images/") {
+		t.Fatalf("image url %v", p.ImageURL)
+	}
+	img := httptest.NewRecorder()
+	c.e.ServeHTTP(img, httptest.NewRequest("GET", strings.TrimPrefix(*p.ImageURL, "http://example.com"), nil))
+	if img.Code != 200 || img.Body.String() != png {
+		t.Fatalf("serve uploaded image: %d", img.Code)
+	}
+	c.call("PUT", "/products/1/image", `not an image`, 400, nil)
+	c.call("DELETE", "/products/1/image", "", 200, &p)
+	if p.ImageURL != nil {
+		t.Fatalf("image not removed %v", p.ImageURL)
+	}
+	(&client{t: t, e: c.e}).call("PATCH", "/products/1", `{"name":"x"}`, 401, nil)
+
+	var log []activity.Entry
+	admin.call("GET", "/activity", "", 200, &log)
+	seen := map[string]bool{}
+	for _, e := range log {
+		seen[e.Action] = true
+	}
+	for _, a := range []string{"product.update", "product.delete", "product.image", "product.image.remove"} {
+		if !seen[a] {
+			t.Fatalf("no %s in activity", a)
+		}
+	}
+}
+
+func TestUndo(t *testing.T) {
+	admin := setup(t)
+	admin.call("POST", "/users", `{"username":"maria","password":"maria-password"}`, 201, nil)
+	admin.call("POST", "/users", `{"username":"joao","password":"joao-password"}`, 201, nil)
+	maria := admin.login("maria", "maria-password")
+	joao := admin.login("joao", "joao-password")
+	maria.call("POST", "/products", rice, 201, nil)
+	maria.call("POST", "/products", `{"barcode":"791","name":"Feijão","category":"kitchen","unit":"kg","packageSize":1}`, 201, nil)
+
+	var b1, b2 struct{ ID int64 }
+	maria.call("POST", "/movements", `{"type":"in","at":"2026-09-01T10:00:00Z","items":[{"productId":1,"packages":2,"amount":10},{"productId":2,"packages":3,"amount":3}]}`, 201, &b1)
+	maria.call("POST", "/movements", `{"type":"out","at":"2026-09-02T10:00:00Z","items":[{"productId":1,"packages":1,"amount":5}]}`, 201, &b2)
+
+	var history []movements.Movement
+	maria.call("GET", "/products/1/movements", "", 200, &history)
+	if len(history) != 2 || history[0].BatchID != b2.ID || history[1].BatchID != b1.ID {
+		t.Fatalf("batch ids in history %+v", history)
+	}
+
+	joao.call("DELETE", "/batches/"+jsonNumber(b2.ID), "", 403, nil)
+	maria.call("DELETE", "/batches/"+jsonNumber(b2.ID), "", 204, nil)
+	maria.call("DELETE", "/batches/"+jsonNumber(b2.ID), "", 409, nil)
+	maria.call("DELETE", "/batches/999", "", 404, nil)
+
+	var inventory []movements.InventoryItem
+	maria.call("GET", "/inventory", "", 200, &inventory)
+	if len(inventory) != 2 || inventory[0].Amount != 10 || inventory[0].UpdatedAt != "2026-09-01T10:00:00Z" {
+		t.Fatalf("undone usage must not count: %+v", inventory)
+	}
+	maria.call("GET", "/products/1/movements", "", 200, &history)
+	if len(history) != 1 || history[0].Type != "in" {
+		t.Fatalf("undone batch must leave history: %+v", history)
+	}
+
+	admin.call("DELETE", "/batches/"+jsonNumber(b1.ID), "", 204, nil)
+	maria.call("GET", "/inventory", "", 200, &inventory)
+	if len(inventory) != 0 {
+		t.Fatalf("all undone: %+v", inventory)
+	}
+	maria.call("DELETE", "/products/1", "", 409, nil)
+
+	var log []activity.Entry
+	admin.call("GET", "/activity", "", 200, &log)
+	undos := 0
+	for _, e := range log {
+		if e.Action == "movements.undo" {
+			undos++
+		}
+	}
+	if undos != 2 {
+		t.Fatalf("undo activity %d", undos)
+	}
+}

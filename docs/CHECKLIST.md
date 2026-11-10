@@ -48,6 +48,7 @@ smoke-tested in an emulator (`API 17` system image) or wait for the device.
 - [x] Recipe suggestions (`/recipes/suggest`, web tab Receitas) via an OpenAI-compatible API; checked with a fake model
 - [ ] Point `RECIPES_*` at Open WebUI (API key + model) and try real suggestions
 - [x] App: login screen + `Authorization` header + 401 → back to login; logout in the menu; checked on the `cn51-api17` emulator against a local API
+- [x] Edit/delete products (delete only without history), product photo upload, undo a sent session (sender or admin); web UI for all of it
 - [ ] App: use `/lookup` in the register dialog
 - [ ] Point the app (Server setting) at the real API from the emulator / CN51
 - [ ] Deploy on the home server

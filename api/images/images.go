@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -50,12 +51,18 @@ func Download(db *sql.DB, raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(data) > maxSize {
-		return "", fmt.Errorf("image too big")
+	return Save(db, data)
+}
+
+var ErrNotImage = errors.New("not a JPEG, PNG, WebP or GIF image of at most 3 MB")
+
+func Save(db *sql.DB, data []byte) (string, error) {
+	if len(data) == 0 || len(data) > maxSize {
+		return "", ErrNotImage
 	}
 	contentType := http.DetectContentType(data)
 	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/webp" && contentType != "image/gif" {
-		return "", fmt.Errorf("not an image: %s", contentType)
+		return "", ErrNotImage
 	}
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {

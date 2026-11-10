@@ -119,7 +119,7 @@ func (h Handler) stock() ([]string, error) {
 			sum(case when b.type = 'in' then m.amount else -m.amount end) as amount
 		from products p
 		join movements m on m.product_id = p.id
-		join batches b on b.id = m.batch_id
+		join batches b on b.id = m.batch_id and b.undone_at is null
 		where p.category = 'kitchen'
 		group by p.id
 		having sum(case when b.type = 'in' then m.amount else -m.amount end) > 0

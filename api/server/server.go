@@ -56,7 +56,13 @@ func New(db *sql.DB) *echo.Echo {
 	e.PUT("/me/password", a.ChangePassword, user)
 
 	e.GET("/products/by-barcode/:barcode", p.ByBarcode, user)
+	e.GET("/products", p.List, user)
 	e.POST("/products", p.Create, user)
+	e.PATCH("/products/:id", p.Update, user)
+	e.DELETE("/products/:id", p.Delete, user)
+	e.PUT("/products/:id/image", p.SetImage, user)
+	e.DELETE("/products/:id/image", p.RemoveImage, user)
+	e.DELETE("/batches/:id", m.Undo, user)
 	e.GET("/lookup/:barcode", l.Get, user)
 	e.GET("/products/:id", p.Get, user)
 	e.GET("/products/:id/movements", m.ByProduct, user)

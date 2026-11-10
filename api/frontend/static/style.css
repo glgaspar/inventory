@@ -83,6 +83,7 @@ button.outline { background: transparent; }
 button.outline:hover { background: var(--accent-soft); }
 button.icon { padding: 4px 10px; }
 button.link { background: none; border: none; color: var(--link); padding: 0; }
+button.link.danger { color: var(--out); }
 .toggle button.on { background: var(--accent-fill); }
 .toggle button { background: transparent; }
 .toggle { display: flex; }

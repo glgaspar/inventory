@@ -21,6 +21,10 @@ const strings = {
     currentPassword: 'Current password', newPassword: 'New password', confirmPassword: 'Repeat the new password',
     passwordMismatch: 'The new passwords are different', passwordChanged: 'Password changed. Other devices were logged out.',
     loadFailed: 'Could not load: %1',
+    showAllProducts: 'Show products without stock', edit: 'Edit', delete: 'Delete', deleted: 'Product deleted',
+    deleteConfirm: 'Delete %1? This cannot be undone.', addPhoto: 'Add photo', changePhoto: 'Change photo', removePhoto: 'Remove photo',
+    badImage: 'Could not read that image', undo: 'Undo', undone: 'Undone',
+    undoConfirm: 'Undo the whole session this came from (every item sent with it)? It stops counting in the stock.',
     recipes: 'Recipes', recipeHint: 'Anything in mind? e.g. quick lunch, no oven', suggest: 'Suggest recipes', again: 'Suggest others',
     thinking: 'Thinking… this can take up to a minute', minutes: '%1 min', servings: '%1 servings', ingredients: 'Ingredients',
     steps: 'Steps', missingItems: 'To buy: %1', fromStock: 'in stock', recipesOff: 'Recipe suggestions are not configured on the server.',
@@ -46,6 +50,10 @@ const strings = {
     currentPassword: 'Senha atual', newPassword: 'Nova senha', confirmPassword: 'Repita a nova senha',
     passwordMismatch: 'As novas senhas são diferentes', passwordChanged: 'Senha alterada. Os outros aparelhos foram desconectados.',
     loadFailed: 'Não foi possível carregar: %1',
+    showAllProducts: 'Mostrar produtos sem estoque', edit: 'Editar', delete: 'Excluir', deleted: 'Produto excluído',
+    deleteConfirm: 'Excluir %1? Não dá para desfazer.', addPhoto: 'Adicionar foto', changePhoto: 'Trocar foto', removePhoto: 'Remover foto',
+    badImage: 'Não foi possível ler essa imagem', undo: 'Desfazer', undone: 'Desfeito',
+    undoConfirm: 'Desfazer a movimentação inteira de onde isto veio (todos os itens enviados junto)? Ela deixa de contar no estoque.',
     recipes: 'Receitas', recipeHint: 'Alguma ideia? ex.: almoço rápido, sem forno', suggest: 'Sugerir receitas', again: 'Sugerir outras',
     thinking: 'Pensando… pode levar até um minuto', minutes: '%1 min', servings: '%1 porções', ingredients: 'Ingredientes',
     steps: 'Modo de preparo', missingItems: 'Falta comprar: %1', fromStock: 'no estoque', recipesOff: 'As sugestões de receitas não estão configuradas no servidor.',
@@ -229,60 +237,184 @@ function table(headers, rows, emptyText) {
 
 async function viewInventory(el) {
   const items = await api('GET', '/inventory');
+  let allProducts = null;
   const search = h('input', { class: 'grow', placeholder: t('search'), type: 'search' });
   const category = h('select', null,
     h('option', { value: '' }, t('allCategories')),
     categories.map(c => h('option', { value: c }, t(c))));
+  const showAll = h('input', { type: 'checkbox', checked: load('showAllProducts') === true });
   const list = h('div');
-  const draw = () => {
+  const draw = async () => {
+    store('showAllProducts', showAll.checked);
+    let rowsData = items;
+    if (showAll.checked) {
+      if (!allProducts) allProducts = await api('GET', '/products');
+      const stocked = new Set(items.map(i => i.product.id));
+      rowsData = items.concat(allProducts.filter(p => !stocked.has(p.id)).map(p => ({ product: p, amount: null })));
+    }
     const q = search.value.trim().toLowerCase();
-    const shown = items.filter(i =>
+    const shown = rowsData.filter(i =>
       (!category.value || i.product.category === category.value) &&
       (!q || i.product.name.toLowerCase().includes(q) || i.product.barcode.includes(q)));
     const rows = shown.map(i => h('tr', { class: 'click', onclick: () => { location.hash = '#/product/' + i.product.id; } },
       h('td', null, h('a', { href: '#/product/' + i.product.id }, i.product.name)),
       h('td', { class: 'category hide-sm' }, t(i.product.category)),
-      h('td', { class: 'num' }, num(i.packages)),
-      h('td', { class: 'num' }, amount(i.amount, i.product.unit)),
-      h('td', { class: 'num muted hide-sm' }, when(i.updatedAt)),
+      h('td', { class: 'num' }, i.amount == null ? '—' : num(i.packages)),
+      h('td', { class: 'num' }, i.amount == null ? '—' : amount(i.amount, i.product.unit)),
+      h('td', { class: 'num muted hide-sm' }, i.amount == null ? '' : when(i.updatedAt)),
     ));
     list.replaceChildren(table(
       [[t('name'), 'wide'], [t('category'), 'hide-sm'], [t('packages'), 'num'], [t('amount'), 'num'], [t('updated'), 'num hide-sm']],
-      rows, items.length ? t('noMatch') : t('inventoryEmpty')));
+      rows, rowsData.length ? t('noMatch') : t('inventoryEmpty')));
   };
-  search.addEventListener('input', draw);
-  category.addEventListener('change', draw);
-  draw();
-  el.replaceChildren(h('h1', null, t('inventory')), h('div', { class: 'row' }, search, category), list);
+  const redraw = () => draw().catch(e => { if (e.status !== 401) toast(e.message, true); });
+  search.addEventListener('input', redraw);
+  category.addEventListener('change', redraw);
+  showAll.addEventListener('change', redraw);
+  await draw();
+  el.replaceChildren(h('h1', null, t('inventory')),
+    h('div', { class: 'row' }, search, category, h('label', { class: 'inline' }, showAll, t('showAllProducts'))), list);
 }
 
 async function viewProduct(el, id) {
   const [product, history] = await Promise.all([api('GET', '/products/' + id), api('GET', '/products/' + id + '/movements')]);
   const stock = history.reduce((sum, m) => sum + (m.type === 'in' ? m.amount : -m.amount), 0);
+  const fail = e => { if (e.status !== 401) toast(e.message, true); };
+
+  const undo = async m => {
+    if (!confirm(t('undoConfirm'))) return;
+    try {
+      await api('DELETE', '/batches/' + m.batchId);
+      toast(t('undone'));
+      render();
+    } catch (e) { fail(e); }
+  };
   const rows = history.map(m => h('tr', null,
     h('td', null, when(m.at)),
     h('td', null, h('span', { class: 'pill ' + m.type }, t(m.type))),
     h('td', { class: 'num' }, num(m.packages)),
     h('td', { class: 'num' }, amount(m.amount, product.unit)),
     h('td', null, m.username),
+    h('td', { class: 'num' }, (me.admin || m.userId === me.id) &&
+      h('button', { class: 'link', onclick: () => undo(m) }, t('undo'))),
   ));
+
+  const photoInput = h('input', { type: 'file', accept: 'image/*', hidden: true });
+  photoInput.addEventListener('change', async () => {
+    const file = photoInput.files[0];
+    if (!file) return;
+    try {
+      await uploadImage('/products/' + id + '/image', await shrinkImage(file));
+      toast(t('saved'));
+      render();
+    } catch (e) { fail(e); }
+  });
+  const removePhoto = async () => {
+    try {
+      await api('DELETE', '/products/' + id + '/image');
+      render();
+    } catch (e) { fail(e); }
+  };
+  const remove = async () => {
+    if (!confirm(t('deleteConfirm', product.name))) return;
+    try {
+      await api('DELETE', '/products/' + id);
+      toast(t('deleted'));
+      location.hash = '#/inventory';
+    } catch (e) { fail(e); }
+  };
+
+  const facts = h('div', null,
+    h('h1', null, product.name),
+    h('dl', { class: 'facts' },
+      h('dt', null, t('barcode')), h('dd', null, product.barcode),
+      h('dt', null, t('category')), h('dd', null, t(product.category)),
+      h('dt', null, t('packageSize')), h('dd', null, amount(product.packageSize, product.unit)),
+      h('dt', null, t('stock')), h('dd', null, amount(stock, product.unit)),
+    ),
+    h('div', { class: 'row spaced' },
+      h('button', { class: 'outline', onclick: () => card.replaceChildren(editForm()) }, t('edit')),
+      h('button', { class: 'outline', onclick: () => photoInput.click() }, product.imageUrl ? t('changePhoto') : t('addPhoto')),
+      product.imageUrl && h('button', { class: 'link', onclick: removePhoto }, t('removePhoto')),
+      history.length === 0 && h('button', { class: 'link danger', onclick: remove }, t('delete')),
+      photoInput,
+    ),
+  );
+  const card = h('div', { class: 'card product' }, product.imageUrl && h('img', { src: product.imageUrl, alt: '' }), facts);
+
+  function editForm() {
+    const name = h('input', { required: true, maxlength: '200', value: product.name });
+    const barcode = h('input', { required: true, maxlength: '100', value: product.barcode });
+    const category = h('select', null, categories.map(c => h('option', { value: c }, t(c))));
+    const unit = h('select', null, units.map(u => h('option', { value: u }, u)));
+    const size = h('input', { class: 'small', type: 'number', min: '0', step: 'any', required: true, value: product.packageSize });
+    category.value = product.category;
+    unit.value = product.unit;
+    return h('form', {
+      class: 'line grow',
+      onsubmit: async e => {
+        e.preventDefault();
+        try {
+          await api('PATCH', '/products/' + id, {
+            name: name.value.trim(), barcode: barcode.value.trim(), category: category.value,
+            unit: unit.value, packageSize: Number(size.value),
+          });
+          toast(t('saved'));
+          render();
+        } catch (err) { fail(err); }
+      },
+    },
+      h('label', { class: 'grow' }, t('name'), name),
+      h('label', null, t('barcode'), barcode),
+      h('label', null, t('category'), category),
+      h('label', null, t('unit'), unit),
+      h('label', null, t('packageSize'), size),
+      h('button', null, t('save')),
+      h('button', { type: 'button', class: 'outline', onclick: () => render() }, t('cancel')),
+    );
+  }
+
   el.replaceChildren(
     h('p', null, h('a', { href: '#/inventory' }, t('back'))),
-    h('div', { class: 'card product' },
-      product.imageUrl && h('img', { src: product.imageUrl, alt: '' }),
-      h('div', null,
-        h('h1', null, product.name),
-        h('dl', { class: 'facts' },
-          h('dt', null, t('barcode')), h('dd', null, product.barcode),
-          h('dt', null, t('category')), h('dd', null, t(product.category)),
-          h('dt', null, t('packageSize')), h('dd', null, amount(product.packageSize, product.unit)),
-          h('dt', null, t('stock')), h('dd', null, amount(stock, product.unit)),
-        ),
-      ),
-    ),
+    card,
     h('h2', null, t('history')),
-    table([[t('when')], [t('type')], [t('packages'), 'num'], [t('amount'), 'num'], [t('user')]], rows, t('historyEmpty')),
+    table([[t('when')], [t('type')], [t('packages'), 'num'], [t('amount'), 'num'], [t('user')], ['', 'num']], rows, t('historyEmpty')),
   );
+}
+
+function shrinkImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(t('badImage')));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error(t('badImage')));
+      img.onload = () => {
+        const scale = Math.min(1, 800 / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error(t('badImage'))), 'image/jpeg', 0.85);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadImage(path, blob) {
+  const res = await fetch(path, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'image/jpeg' }, body: blob });
+  if (res.status === 401) {
+    signOut();
+    toast(t('sessionExpired'), true);
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const err = new Error((data && data.message) || res.statusText);
+    err.status = res.status;
+    throw err;
+  }
 }
 
 function viewMovement(el) {

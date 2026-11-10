@@ -47,6 +47,12 @@ All of these need a logged-in user (any role).
 | 6 | `GET /products/{id}/movements` | product history | — | `200 [Movement]` newest first |
 | 7 | `GET /lookup/{barcode}` | after a `404` on 1, to prefill the register dialog | — | `200 Suggestion` / `404` unknown everywhere / `502` a source is down, try again |
 | 9 | `POST /recipes/suggest` | recipe ideas from the kitchen stock | `{ "hint": "almoço rápido", "lang": "pt", "refresh": false }` all optional | `200 { "recipes": [Recipe], "model", "generatedAt", "cached" }` / `503` not configured / `409` nothing in the kitchen / `502` model failed |
+| 10 | `GET /products` | web: products without stock | — | `200 [Product]` by name |
+| 11 | `PATCH /products/{id}` | fix a product | any of `barcode`, `name`, `category`, `unit`, `packageSize` | `200 Product` / `409` barcode taken |
+| 12 | `DELETE /products/{id}` | remove a mistake | — | `204` / `409` it has movements (edit it instead) |
+| 13 | `PUT /products/{id}/image` | set the photo | raw image bytes (JPEG/PNG/WebP/GIF, ≤ 1 MB) | `200 Product` |
+| 14 | `DELETE /products/{id}/image` | remove the photo | — | `200 Product` |
+| 15 | `DELETE /batches/{id}` | undo a sent session | — | `204` / `403` not yours and not admin / `409` already undone |
 | 8 | `GET /images/{id}` | product photos (no token needed, plain HTTP) | — | image |
 
 ## Types
@@ -79,6 +85,7 @@ All of these need a logged-in user (any role).
   "amount": 5,
   "packages": 1,
   "at": "2026-09-22T13:05:00Z",
+  "batchId": 42,         // the session it was sent in; DELETE /batches/42 undoes the whole session
   "userId": 3,           // who sent the batch this movement came from
   "username": "maria"
 }
@@ -122,7 +129,9 @@ All of these need a logged-in user (any role).
   "userId": 3,           // null for a failed login with an unknown username
   "username": "maria",
   "action": "movements.create",   // login, login.failed, logout, password.change, user.create,
-                                  // user.update, product.create, movements.create, recipes.suggest
+                                  // user.update, product.create, product.update, product.delete,
+                                  // product.image, product.image.remove, movements.create,
+                                  // movements.undo, recipes.suggest
   "details": { "batchId": 42, "type": "in", "items": 2 },
   "ip": "192.168.0.23",
   "at": "2026-09-22T13:05:00Z"
@@ -134,6 +143,7 @@ All of these need a logged-in user (any role).
 - Any non-2xx status is shown to the user as an error; a connection failure appears as status 0.
 - Endpoint 1 must return `404` (not an empty body) when the barcode is unknown; the app opens the
   "register product" dialog on 404.
+- Undone sessions (15) are kept with who undid them, but no longer count in the inventory, the history or recipes.
 - Endpoint 3 is atomic: either every item is recorded or none. The app deletes its local session only
   after a `201`.
 - The app currently only produces `type: "in"`. `"out"` movements come from other services and are

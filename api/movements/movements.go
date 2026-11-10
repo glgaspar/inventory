@@ -22,6 +22,7 @@ type InventoryItem struct {
 
 type Movement struct {
 	ID        int64   `json:"id"`
+	BatchID   int64   `json:"batchId"`
 	ProductID int64   `json:"productId"`
 	Type      string  `json:"type"`
 	Amount    float64 `json:"amount"`
@@ -87,7 +88,7 @@ func (h Handler) Inventory(c echo.Context) error {
 			max(b.at)
 		from products p
 		join movements m on m.product_id = p.id
-		join batches b on b.id = m.batch_id
+		join batches b on b.id = m.batch_id and b.undone_at is null
 		group by p.id
 		order by p.id`)
 	if err != nil {
@@ -117,9 +118,9 @@ func (h Handler) ByProduct(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	rows, err := h.DB.Query(`select m.id, m.product_id, b.type, m.amount, m.packages, b.at, u.id, u.username
+	rows, err := h.DB.Query(`select m.id, m.batch_id, m.product_id, b.type, m.amount, m.packages, b.at, u.id, u.username
 		from movements m
-		join batches b on b.id = m.batch_id
+		join batches b on b.id = m.batch_id and b.undone_at is null
 		join users u on u.id = b.user_id
 		where m.product_id = $1
 		order by b.at desc, m.id desc`, id)
@@ -132,7 +133,7 @@ func (h Handler) ByProduct(c echo.Context) error {
 	for rows.Next() {
 		var m Movement
 		var at time.Time
-		if err := rows.Scan(&m.ID, &m.ProductID, &m.Type, &m.Amount, &m.Packages, &at, &m.UserID, &m.Username); err != nil {
+		if err := rows.Scan(&m.ID, &m.BatchID, &m.ProductID, &m.Type, &m.Amount, &m.Packages, &at, &m.UserID, &m.Username); err != nil {
 			return err
 		}
 		m.At = web.ISO(at)
@@ -142,4 +143,32 @@ func (h Handler) ByProduct(c echo.Context) error {
 		return err
 	}
 	return c.JSON(http.StatusOK, list)
+}
+
+func (h Handler) Undo(c echo.Context) error {
+	id, err := web.ParamID(c)
+	if err != nil {
+		return err
+	}
+	user := auth.Current(c)
+	var owner int64
+	var undone bool
+	var batchType string
+	err = h.DB.QueryRow("select user_id, undone_at is not null, type from batches where id = $1", id).Scan(&owner, &undone, &batchType)
+	if err != nil {
+		return db.HTTPError(err)
+	}
+	if owner != user.ID && !user.Admin {
+		return echo.NewHTTPError(http.StatusForbidden, "only who sent it or an admin can undo it")
+	}
+	if undone {
+		return echo.NewHTTPError(http.StatusConflict, "already undone")
+	}
+	if _, err := h.DB.Exec("update batches set undone_at = now(), undone_by = $2 where id = $1 and undone_at is null", id, user.ID); err != nil {
+		return err
+	}
+	var items int
+	h.DB.QueryRow("select count(*) from movements where batch_id = $1", id).Scan(&items)
+	activity.Log(h.DB, c, &user.ID, "movements.undo", map[string]any{"batchId": id, "type": batchType, "items": items})
+	return c.NoContent(http.StatusNoContent)
 }
